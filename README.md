@@ -8,6 +8,10 @@ Personal Development Planning System
 - 组长：李梓欣
 - 成员：李晔、魏吾嘉、王颖超、薛军浩
 
+## 关键需求点
+1.  
+2. 
+
 ## 开发说明
 
 主要使用 FastAPI + SQLModel 搭建基础骨架，包含示例路由、数据库模型、CRUD、测试与 Dockerfile。
