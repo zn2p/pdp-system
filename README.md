@@ -8,9 +8,10 @@ Personal Development Planning System
 - 组长：李梓欣
 - 成员：李晔、魏吾嘉、王颖超、薛军浩
 
-## 关键需求点
+## 关键概要需求
 1.  
 2. 
+3. 
 
 ## 开发说明
 
