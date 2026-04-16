@@ -12,7 +12,7 @@ Personal Development Planning System
 
 本项目的详细业务需求、功能规格及验收标准请参阅：
 
-- **[下载 Markdown 版本](./docs/requirements/功能需求.md)**
+- **[下载 Markdown 版本](./docs/requirements/完整需求.md)**
 - **[下载 Word 版本](./docs/requirements/功能需求.docx)**
 
 功能需求文档包含以下模块：
