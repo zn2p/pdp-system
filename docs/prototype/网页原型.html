@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成长·未来 | 图表修复 · 教师首页对齐</title>
+    <style>
+        :root {
+            --color-near-black: #141413;
+            --color-terracotta: #c96442;
+            --color-coral: #d97757;
+            --color-parchment: #f5f4ed;
+            --color-ivory: #faf9f5;
+            --color-white: #ffffff;
+            --color-warm-sand: #e8e6dc;
+            --color-dark-surface: #30302e;
+            --color-charcoal-warm: #4d4c48;
+            --color-olive-gray: #5e5d59;
+            --color-stone-gray: #87867f;
+            --color-border-cream: #f0eee6;
+            --color-ring-warm: #d1cfc5;
+            --font-serif: Georgia, 'Times New Roman', Times, serif;
+            --font-sans: Arial, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            --bg-page: var(--color-parchment);
+            --bg-card: var(--color-ivory);
+            --text-primary: var(--color-near-black);
+            --text-secondary: var(--color-olive-gray);
+            --border-color: var(--color-border-cream);
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.04);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-page); color: var(--text-primary); font-family: var(--font-sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        #app { min-height: 100vh; display: flex; flex-direction: column; }
+        .login-container { max-width: 480px; margin: 80px auto; background: var(--bg-card); border-radius: 24px; padding: 40px 36px; box-shadow: var(--shadow-card); border: 1px solid var(--border-color); }
+        .input-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block; }
+        .input-field { width: 100%; padding: 14px 16px; background: var(--color-white); border: 1px solid var(--border-color); border-radius: 12px; font-size: 16px; margin-bottom: 20px; }
+        .role-switch { display: flex; gap: 12px; margin: 20px 0 16px; background: var(--color-warm-sand); padding: 6px; border-radius: 40px; }
+        .role-option { flex: 1; padding: 10px 0; text-align: center; border-radius: 32px; background: transparent; border: none; cursor: pointer; }
+        .role-option.active { background: var(--color-white); color: var(--color-terracotta); box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .btn { padding: 14px 24px; border-radius: 12px; font-weight: 500; font-size: 16px; border: none; cursor: pointer; width: 100%; }
+        .btn-brand { background: var(--color-terracotta); color: var(--color-ivory); box-shadow: 0 0 0 1px #c96442; }
+        .app-layout { display: flex; flex: 1; }
+        .sidebar { width: 280px; background: rgba(245,244,237,0.8); backdrop-filter: blur(12px); border-right: 1px solid var(--border-color); padding: 28px 16px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+        .brand { font-family: var(--font-serif); font-size: 24px; font-weight: 500; margin-bottom: 32px; padding-left: 12px; display: flex; align-items: center; gap: 10px; }
+        .brand-mark { width: 28px; height: 28px; background: var(--color-terracotta); border-radius: 8px; color: var(--color-ivory); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .menu-item { padding: 14px 18px; border-radius: 12px; margin-bottom: 6px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 14px; }
+        .menu-item i { width: 22px; color: var(--text-tertiary, #87867f); }
+        .menu-item:hover { background: var(--color-warm-sand); }
+        .menu-item.active { background: var(--color-white); color: var(--color-terracotta); box-shadow: 0 0 0 1px var(--color-ring-warm); }
+        .user-footer { margin-top: auto; padding: 20px 12px; border-top: 1px solid var(--border-color); font-size: 14px; }
+        .main-content { flex: 1; padding: 32px 40px; background: var(--bg-page); }
+        .page-title { font-family: var(--font-serif); font-size: 36px; font-weight: 500; margin-bottom: 32px; }
+        .card { background: var(--bg-card); border-radius: 20px; padding: 28px; border: 1px solid var(--border-color); margin-bottom: 24px; }
+        .gpa-card { background: var(--color-dark-surface); color: var(--color-ivory); border-radius: 24px; padding: 28px; margin-bottom: 32px; }
+        .hero-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; align-items: stretch; }
+        .hero-left, .hero-right { display: flex; }
+        .hero-left .card, .hero-right .card { flex: 1; display: flex; flex-direction: column; }
+        .hero-left .card { justify-content: space-between; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+        .stat-mini { background: var(--color-warm-sand); padding: 18px 12px; border-radius: 16px; text-align: center; }
+        .stat-mini strong { font-size: 28px; font-family: var(--font-serif); display: block; margin-bottom: 4px; }
+        .course-item, .achievement-item { background: var(--color-white); border-radius: 14px; padding: 18px; margin-bottom: 12px; border: 1px solid var(--border-color); cursor: pointer; }
+        .tag { background: var(--color-warm-sand); padding: 4px 12px; border-radius: 40px; font-size: 13px; }
+        .btn-small { padding: 8px 16px; border-radius: 10px; background: var(--color-white); border: 1px solid var(--border-color); cursor: pointer; }
+        .modal-mask { position: fixed; inset:0; background: rgba(20,20,19,0.2); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index:1000; }
+        .modal { background: var(--bg-card); border-radius: 24px; padding: 32px; max-width: 1000px; width: 90%; border: 1px solid var(--border-color); max-height: 85vh; overflow-y: auto; }
+        .flex-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .mt-4 { margin-top: 24px; }
+        .text-muted { color: var(--text-secondary); }
+        .form-row { display: flex; flex-direction: column; margin-bottom: 16px; }
+        .form-row label { font-size: 14px; font-weight: 500; margin-bottom: 6px; color: #141413; }
+        .resume-paper { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); line-height: 1.5; }
+        .resume-section { margin-bottom: 24px; }
+        .resume-section h3 { border-bottom: 2px solid #333; padding-bottom: 6px; margin-bottom: 16px; color: #141413; }
+        .chart-container { margin-top: 24px; height: 280px; }
+        .attachment-preview { display: flex; gap: 8px; align-items: center; background: var(--color-warm-sand); padding: 8px 12px; border-radius: 12px; }
+        .error-msg { color: #b53333; font-size: 13px; margin-top: 4px; }
+        .resume-preview { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); font-family: Arial, sans-serif; margin-bottom:20px; }
+        .resume-single { max-width: 800px; margin: 0 auto; }
+        .resume-double { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+        .resume-item-title { font-weight: bold; color: #141413; }
+        .resume-date { color: #5e5d59; font-size: 10pt; }
+        .btn-brand.btn-small { color: #141413 !important; background: var(--color-white); border: 1px solid var(--border-color); box-shadow: none; }
+        .compare-result-box { background: var(--color-warm-sand); border-radius: 18px; padding: 20px; margin-top: 20px; }
+        .import-preview { max-height: 150px; overflow-y: auto; background: white; border-radius: 12px; padding: 12px; margin: 16px 0; }
+        .student-resume-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 24px; }
+        .student-resume-card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+        .student-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
+        .student-card-header h4 { font-family: var(--font-serif); font-size: 20px; }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- 登录界面 -->
+        <div v-if="!isLoggedIn" class="login-container">
+            <div class="brand-login">🎓 GrowthLink</div>
+            <div style="color: var(--text-tertiary, #87867f); margin-bottom: 32px;">学生 · 教师 · 数据驱动成长</div>
+            <div><label class="input-label">用户名</label><input v-model="loginForm.displayName" class="input-field" placeholder="你的姓名"></div>
+            <div><label class="input-label">账号</label><input v-model="loginForm.username" class="input-field" placeholder="学号/工号"></div>
+            <div><label class="input-label">密码</label><input v-model="loginForm.password" type="password" class="input-field" placeholder="密码"></div>
+            <label class="input-label">身份</label>
+            <div class="role-switch">
+                <button class="role-option" :class="{active: loginForm.role === 'student'}" @click="loginForm.role='student'">🧑‍🎓 学生</button>
+                <button class="role-option" :class="{active: loginForm.role === 'staff'}" @click="loginForm.role='staff'">👩‍🏫 教师</button>
+            </div>
+            <button class="btn btn-brand" @click="handleLogin">登录 · 进入系统</button>
+            <div style="margin-top: 24px; font-size: 13px; color: var(--text-tertiary); text-align: center;">演示: student / 123  ·  staff / 123</div>
+        </div>
+
+        <div v-else class="app-layout">
+            <aside class="sidebar">
+                <div class="brand"><span class="brand-mark">G</span> GrowthLink</div>
+                <div style="flex:1;">
+                    <div v-for="item in menuItems" :key="item.key" class="menu-item" :class="{active: currentPage === item.key}" @click="currentPage = item.key">
+                        <i :class="item.icon"></i> {{ item.label }}
+                    </div>
+                </div>
+                <div class="user-footer">
+                    <div><i class="fas fa-user-circle"></i> {{ currentUser.displayName || currentUser.name }}</div>
+                    <div style="font-size:12px; color: var(--text-tertiary);">{{ roleDisplayName }}</div>
+                    <button class="btn-small" style="margin-top:16px; width:100%;" @click="logout">退出登录</button>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <h2 class="page-title">{{ pageTitle }}</h2>
+
+                <!-- 学生端 (完全保留) -->
+                <div v-if="currentRole === 'student'">
+                    <div v-if="currentPage === 'home'">
+                        <div class="hero-grid">
+                            <div class="hero-left"><div class="card"><h1 style="font-size:48px;">成长数据<br>可视化</h1><div class="desc" style="margin-top:auto;">围绕大学生个人成长与发展需求，帮助用户管理并分析自己的成绩与成就，与大众进行对比从而更清晰地了解自己的水平并规划未来的发展。</div></div></div>
+                            <div class="hero-right"><div class="card"><h2>📊 学业概览</h2><div class="stats-grid"><div class="stat-mini"><strong>{{ gpaDisplayValue }}</strong>{{ gpaDisplayLabel }}</div><div class="stat-mini"><strong>{{ courses.length }}</strong>课程</div><div class="stat-mini"><strong>{{ achievements.length }}</strong>成就</div><div class="stat-mini"><strong>Top 15%</strong>排名</div></div></div></div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3,1fr); gap: 18px;"><div class="card"><h3>课程管理</h3><p class="text-muted">记录成绩并自动计算 GPA。</p></div><div class="card"><h3>大众对比</h3><p class="text-muted">查看与同专业学生的能力差距。</p></div><div class="card"><h3>展示视图</h3><p class="text-muted">为教师快速呈现重点。</p></div></div>
+                    </div>
+
+                    <!-- 课程管理 -->
+                    <div v-if="currentPage === 'courses'">
+                        <div class="gpa-card">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div><div>{{ leftTitle }}</div><div style="font-family: var(--font-serif); font-size: 54px;">{{ leftValue }}</div><div>总学分 {{ totalCredits }} · 课程 {{ courses.length }}</div></div>
+                                <div style="text-align:right;"><div>{{ rightTitle }}</div><div style="font-family: var(--font-serif); font-size: 32px;">{{ rightValue }}</div></div>
+                            </div>
+                            <div style="margin-top: 16px; display: flex; gap: 20px; align-items: center;">
+                                <label style="color: #e0d7cf;">📐 评分机制:</label>
+                                <select v-model="gradeScale" class="input-field" style="width:auto; background:transparent; color:white; border-color:#5e5d59;" @change="updateScale">
+                                    <option value="gpa4">4.0 绩点制 (A=4.0)</option>
+                                    <option value="percent">百分制 (平均成绩)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;"><h3><i class="fas fa-book-open"></i> 课程列表</h3></div>
+                            <div v-if="courses.length===0" class="text-muted" style="text-align:center; padding:40px;">暂无课程</div>
+                            <div v-for="c in courses" :key="c.id" class="course-item" @click="toggleCourseDetail(c.id)">
+                                <div style="display: flex; justify-content: space-between;"><span>{{ c.name }} <span class="tag">{{ c.semester }}</span></span><span>{{ c.grade }}分 · {{ c.credit }}学分</span></div>
+                                <div v-if="expandedCourses.includes(c.id)" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border-color); display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;" @click.stop>
+                                    <span>📌 编号: {{ c.code }}</span><span>👨‍🏫 教师: {{ c.teacher }}</span>
+                                    <span>📊 绩点: {{ getGpaPoint(c) }}</span><span>📝 备注: {{ c.note || '无' }}</span>
+                                    <span>🏆 排名: {{ c.rank || 'N/A' }}</span>
+                                    <div style="grid-column:span 2; display:flex; gap:8px;"><button class="btn-small" @click="editCourse(c)">编辑</button><button class="btn-small" @click="deleteCourse(c.id)">删除</button></div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 24px; text-align: center;">
+                                <button class="btn-small" style="background:var(--color-terracotta); color:white; border:none; padding:12px 24px;" @click="openAddCourseModal"><i class="fas fa-plus"></i> 添加新课程</button>
+                            </div>
+                        </div>
+                        <div class="card"><h3>📈 各学期趋势</h3><div class="chart-container"><canvas id="studentGpaChart"></canvas></div></div>
+                    </div>
+
+                    <!-- 成就管理 -->
+                    <div v-if="currentPage === 'achievements'">
+                        <div class="card">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                                <h3><i class="fas fa-medal"></i> 成就与经历</h3>
+                                <button class="btn-small" style="background:var(--color-terracotta); color:white;" @click="openAddAchievementModal"><i class="fas fa-plus"></i> 新增成就</button>
+                            </div>
+                            <div v-if="sortedAchievements.length===0" class="text-muted" style="text-align:center; padding:40px;">暂无成就，点击新增记录</div>
+                            <div v-for="ach in sortedAchievements" :key="ach.id" class="achievement-item" @click="toggleAchieveDetail(ach.id)">
+                                <div style="display:flex; justify-content:space-between;">
+                                    <span><strong>{{ ach.name }}</strong> <span class="tag">{{ ach.type }}</span></span>
+                                    <span style="color: var(--text-secondary);">{{ ach.date }}</span>
+                                </div>
+                                <div style="font-size:14px; margin-top:6px;" v-if="ach.org">{{ ach.org }} · {{ ach.level || '' }}</div>
+                                <div v-if="expandedAchieves.includes(ach.id)" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border-color);" @click.stop>
+                                    <div><strong>描述：</strong>{{ ach.description || '无' }}</div>
+                                    <div><strong>标签：</strong>{{ ach.tags || '无' }}</div>
+                                    <div class="flex-row" style="margin-top:12px;">
+                                        <span v-if="ach.attachment" class="attachment-preview"><i class="fas fa-paperclip"></i> {{ ach.attachment }} <i class="fas fa-eye" style="margin-left:8px; cursor:pointer;" @click="previewAttachment(ach)"></i></span>
+                                    </div>
+                                    <div style="display:flex; gap:8px; margin-top:16px;">
+                                        <button class="btn-small" @click="editAchievement(ach)"><i class="fas fa-pen"></i> 编辑</button>
+                                        <button class="btn-small" @click="deleteAchievement(ach.id)"><i class="fas fa-trash"></i> 删除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 简历生成 -->
+                    <div v-if="currentPage === 'resume'">
+                        <div class="card">
+                            <h3 style="color: #141413;"><i class="fas fa-file-alt"></i> 简历配置与生成</h3>
+                            <div class="flex-row" style="margin-bottom:20px;">
+                                <label style="color: #141413;"><strong>选择模板:</strong></label>
+                                <select v-model="resumeTemplate" class="input-field" style="width:auto; color: #141413;">
+                                    <option value="single">简约单栏 (经典上下)</option>
+                                    <option value="double">双栏现代 (左侧信息/技能)</option>
+                                </select>
+                                <button class="btn-small btn-brand" @click="openBasicInfoModal" style="color: #141413 !important;"><i class="fas fa-user-edit" style="color: #141413;"></i> 编辑基本信息</button>
+                            </div>
+                            <div v-if="missingFields.length" class="error-msg" style="margin-bottom:16px; color: #141413;"><i class="fas fa-exclamation-triangle"></i> 基本信息缺失: {{ missingFields.join('、') }}</div>
+                            <div class="resume-preview">
+                                <div v-if="resumeTemplate === 'single'" class="resume-single">
+                                    <h2 style="text-align:center; color: #141413;">{{ basicInfo.name || '未填写' }}</h2>
+                                    <p style="text-align:center; color: #141413;">{{ basicInfo.jobTarget || '求职意向' }} · {{ basicInfo.phone }} · {{ basicInfo.email }}</p>
+                                    <div class="resume-section"><h3>教育背景</h3><p style="color: #141413;"><strong>{{ basicInfo.school || '学校名称' }}</strong> · {{ basicInfo.major }} · {{ basicInfo.gradYear }}<br>GPA: {{ computedGPA.total || '暂无' }} · 核心课程: {{ coreCourses }}</p></div>
+                                    <div class="resume-section"><h3>专业技能</h3> <p style="color: #141413;">{{ skillTags.join(' · ') || 'Python · SQL' }}</p> </div>
+                                    <div class="resume-section"><h3>实习经历</h3><div v-for="i in internshipItems"><strong style="color: #141413;">{{ i.name }}</strong> <span class="resume-date">{{ i.date }}</span><br><span style="color: #141413;">{{ i.description }}</span></div><div v-if="!internshipItems.length" class="text-muted">暂无实习经历</div></div>
+                                    <div class="resume-section"><h3>项目经历</h3><div v-for="p in projectItems"><strong style="color: #141413;">{{ p.name }}</strong> <span class="resume-date">{{ p.date }}</span><br><span style="color: #141413;">{{ p.description }}</span></div><div v-if="!projectItems.length" class="text-muted">暂无项目经历</div></div>
+                                    <div class="resume-section"><h3>荣誉奖项</h3><div v-for="a in awardItems" style="color: #141413;">{{ a.name }} · {{ a.org }} ({{ a.date }})</div><div v-if="!awardItems.length" class="text-muted">暂无荣誉奖项</div></div>
+                                    <div class="resume-section"><h3>证书/语言</h3><div v-for="c in certItems" style="color: #141413;">{{ c.name }} · {{ c.level }} ({{ c.date }})</div><div v-if="!certItems.length" class="text-muted">暂无证书</div></div>
+                                </div>
+                                <div v-else class="resume-double">
+                                    <div><h3 style="color: #141413;">{{ basicInfo.name || '未填写' }}</h3><p style="color: #141413;">{{ basicInfo.jobTarget }}<br>{{ basicInfo.phone }}<br>{{ basicInfo.email }}</p><div class="resume-section"><h3>专业技能</h3><p style="color: #141413;">{{ skillTags.join(' · ') }}</p></div><div class="resume-section"><h3>证书/语言</h3><div v-for="c in certItems" style="color: #141413;">{{ c.name }} ({{ c.date }})</div></div></div>
+                                    <div><div class="resume-section"><h3>教育背景</h3><p style="color: #141413;"><strong>{{ basicInfo.school }}</strong> · {{ basicInfo.major }} · GPA {{ computedGPA.total }}</p></div><div class="resume-section"><h3>实习经历</h3><div v-for="i in internshipItems"><strong style="color: #141413;">{{ i.name }}</strong><br><span style="color: #141413;">{{ i.description }}</span></div></div><div class="resume-section"><h3>项目经历</h3><div v-for="p in projectItems"><strong style="color: #141413;">{{ p.name }}</strong><br><span style="color: #141413;">{{ p.description }}</span></div></div><div class="resume-section"><h3>荣誉奖项</h3><div v-for="a in awardItems" style="color: #141413;">{{ a.name }} · {{ a.date }}</div></div></div>
+                                </div>
+                            </div>
+                            <div class="flex-row"><button class="btn btn-brand" style="width:auto;" @click="previewFullResume"><i class="fas fa-eye"></i> 完整预览</button><button class="btn-small btn-secondary" @click="exportResume('pdf')"><i class="fas fa-file-pdf"></i> 导出PDF</button><button class="btn-small btn-secondary" @click="exportResume('word')"><i class="fas fa-file-word"></i> 导出Word</button></div>
+                            <p class="text-muted" style="margin-top:12px; color: #141413;">文件名: {{ exportFileName }}</p>
+                        </div>
+                    </div>
+
+                    <!-- 大众对比 -->
+                    <div v-if="currentPage === 'compare'">
+                        <div class="card">
+                            <h3><i class="fas fa-database"></i> 大众基准数据导入 (管理员)</h3>
+                            <div class="form-row"><label>数据文件 (Excel/CSV)</label><input type="file" @change="handleBenchmarkFile" accept=".csv,.xlsx,.xls" style="display:none;" ref="benchmarkFileInput"><button class="btn-small" @click="$refs.benchmarkFileInput.click()"><i class="fas fa-upload"></i> 选择文件</button><span v-if="benchmarkFile"> {{ benchmarkFile.name }}</span></div>
+                            <div class="form-row"><label>所属群体</label><select v-model="benchmarkGroup" class="input-field"><option>同校</option><option>同专业</option><option>同年级</option><option>同升学方向</option><option>同就业方向</option></select></div>
+                            <div class="form-row"><label>统计时间范围</label><input v-model="benchmarkTimeRange" class="input-field" placeholder="如 2024-2025"></div>
+                            <button class="btn-small btn-brand" @click="importBenchmark">开始导入</button>
+                            <div v-if="importStatus" class="import-preview">
+                                <div v-if="importStatus.success"><i class="fas fa-check-circle" style="color:#2e7d32;"></i> 导入成功！成功 {{ importStatus.successCount }} 条，失败 {{ importStatus.failCount }} 条。</div>
+                                <div v-if="importStatus.errors.length"><div class="error-msg"><i class="fas fa-exclamation-triangle"></i> 错误详情:</div><ul><li v-for="(err,idx) in importStatus.errors" :key="idx" style="color:#b53333;">{{ err.row }}: {{ err.reason }}</li></ul></div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3><i class="fas fa-chart-bar"></i> 个人 vs 群体多维度对比</h3>
+                            <div class="form-row"><label>目标对比群体</label><select v-model="compareGroup" class="input-field"><option>同校</option><option>同专业</option><option>同年级</option><option>同升学方向</option><option>同就业方向</option></select></div>
+                            <div class="form-row"><label>对比维度 (多选)</label>
+                                <div><label><input type="checkbox" value="gpa" v-model="compareDims"> GPA排名</label> <label><input type="checkbox" value="course" v-model="compareDims"> 课程修读进度</label> <label><input type="checkbox" value="competition" v-model="compareDims"> 竞赛经历</label> <label><input type="checkbox" value="internship" v-model="compareDims"> 实习经历</label> <label><input type="checkbox" value="award" v-model="compareDims"> 获奖情况</label> <label><input type="checkbox" value="cert" v-model="compareDims"> 技能证书持有</label></div>
+                            </div>
+                            <div class="form-row"><label>对比时间范围</label><select v-model="timeRange" class="input-field"><option>全部</option><option>2024春</option><option>2024秋</option></select></div>
+                            <div class="form-row"><label>数据展示粒度</label><select v-model="granularity" class="input-field"><option>按学期</option><option>按学年</option><option>全大学周期</option></select></div>
+                            <button class="btn btn-brand" style="width:auto;" @click="runComparison">执行对比分析</button>
+
+                            <div v-if="comparisonResult" class="compare-result-box">
+                                <h4>📊 对比结论</h4>
+                                <div v-if="comparisonMessage">{{ comparisonMessage }}</div>
+                                <div v-for="dim in compareDims" :key="dim" style="margin-top:12px;">
+                                    <strong>{{ getDimName(dim) }}:</strong> {{ getDimResult(dim) }}
+                                </div>
+                                <div class="chart-container"><canvas id="compareChart"></canvas></div>
+                            </div>
+                            <div v-if="comparisonError" class="error-msg mt-4">{{ comparisonError }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 教师端 -->
+                <div v-else>
+                    <div v-if="currentPage === 'home'">
+                        <div class="hero-grid">
+                            <div class="hero-left"><div class="card"><h1 style="font-size:48px;">教师工作台<br><span style="font-size:18px; font-weight:normal;">数据驱动 · 精准指导</span></h1><div class="desc" style="margin-top:auto;">查看所带学生的成长数据，快速定位学业情况，为个性化辅导提供依据。</div></div></div>
+                            <div class="hero-right"><div class="card"><h2>📊 今日概览</h2><div class="stats-grid"><div class="stat-mini"><strong>{{ teacherStudents.length }}</strong>学生数</div><div class="stat-mini"><strong>3.48</strong>平均GPA</div><div class="stat-mini"><strong>12</strong>预警</div><div class="stat-mini"><strong>5</strong>优秀</div></div></div></div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                            <div class="card" style="cursor:pointer;" @click="currentPage='students'"><h3><i class="fas fa-users"></i> 学生展示</h3><p class="text-muted">简历卡片式浏览所有学生档案，快速了解能力画像。</p></div>
+                            <div class="card" style="cursor:pointer;" @click="currentPage='compare'"><h3><i class="fas fa-chart-line"></i> 对比分析</h3><p class="text-muted">导入基准数据，多维度对比学生与群体水平。</p></div>
+                        </div>
+                    </div>
+
+                    <div v-if="currentPage === 'students'">
+                        <div class="card">
+                            <h3><i class="fas fa-users"></i> 学生展示 (简历视图)</h3>
+                            <div class="student-resume-grid">
+                                <div v-for="student in teacherStudents" :key="student.id" class="student-resume-card">
+                                    <div class="student-card-header">
+                                        <h4>{{ student.name }} <span style="font-size:14px; font-weight:normal;">{{ student.studentId }}</span></h4>
+                                    </div>
+                                    <div style="font-size:13px;">
+                                        <p><strong>求职意向:</strong> {{ student.basic?.jobTarget || '开发工程师' }}</p>
+                                        <p><strong>学校:</strong> {{ student.basic?.school || '某某大学' }} · {{ student.basic?.major || '计算机' }}</p>
+                                        <p><strong>GPA:</strong> {{ student.gpa || '3.5' }} · 核心课程: {{ student.coreCourses || '数据结构, 数据库' }}</p>
+                                        <p><strong>实习:</strong> {{ student.internship || '阿里巴巴 (2024.07-2024.09)' }}</p>
+                                        <p><strong>项目:</strong> {{ student.project || '智能推荐系统' }}</p>
+                                        <p><strong>奖项:</strong> {{ student.awards || '算法大赛省级二等奖' }}</p>
+                                    </div>
+                                </div>
+                                <div v-if="!teacherStudents.length" class="text-muted" style="padding:20px;">暂无学生数据，请先添加学生。</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="currentPage === 'compare'">
+                        <div class="card">
+                            <div class="flex-row" style="justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <label style="font-weight:600;"><i class="fas fa-user-graduate"></i> 选择学生:</label>
+                                    <select v-model="selectedStudentId" class="input-field" style="width:200px;">
+                                        <option v-for="s in teacherStudents" :key="s.id" :value="s.id">{{ s.name }} ({{ s.studentId }})</option>
+                                    </select>
+                                </div>
+                                <button class="btn-small btn-brand" @click="openAddStudentModal"><i class="fas fa-plus"></i> 新增学生</button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3><i class="fas fa-database"></i> 大众基准数据导入</h3>
+                            <div class="form-row"><label>数据文件 (Excel/CSV)</label><input type="file" @change="handleBenchmarkFile" accept=".csv,.xlsx,.xls" style="display:none;" ref="benchmarkFileInput"><button class="btn-small" @click="$refs.benchmarkFileInput.click()"><i class="fas fa-upload"></i> 选择文件</button><span v-if="benchmarkFile"> {{ benchmarkFile.name }}</span></div>
+                            <div class="form-row"><label>所属群体</label><select v-model="benchmarkGroup" class="input-field"><option>同校</option><option>同专业</option><option>同年级</option><option>同升学方向</option><option>同就业方向</option></select></div>
+                            <div class="form-row"><label>统计时间范围</label><input v-model="benchmarkTimeRange" class="input-field" placeholder="如 2024-2025"></div>
+                            <button class="btn-small btn-brand" @click="importBenchmark">开始导入</button>
+                            <div v-if="importStatus" class="import-preview">
+                                <div v-if="importStatus.success"><i class="fas fa-check-circle" style="color:#2e7d32;"></i> 导入成功！成功 {{ importStatus.successCount }} 条，失败 {{ importStatus.failCount }} 条。</div>
+                                <div v-if="importStatus.errors.length"><div class="error-msg"><i class="fas fa-exclamation-triangle"></i> 错误详情:</div><ul><li v-for="(err,idx) in importStatus.errors" :key="idx" style="color:#b53333;">{{ err.row }}: {{ err.reason }}</li></ul></div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3><i class="fas fa-chart-bar"></i> 个人 vs 群体多维度对比</h3>
+                            <div v-if="!selectedStudentId" class="text-muted">请先在上方选择学生</div>
+                            <template v-else>
+                                <div class="form-row"><label>目标对比群体</label><select v-model="compareGroup" class="input-field"><option>同校</option><option>同专业</option><option>同年级</option><option>同升学方向</option><option>同就业方向</option></select></div>
+                                <div class="form-row"><label>对比维度 (多选)</label>
+                                    <div><label><input type="checkbox" value="gpa" v-model="compareDims"> GPA排名</label> <label><input type="checkbox" value="course" v-model="compareDims"> 课程修读进度</label> <label><input type="checkbox" value="competition" v-model="compareDims"> 竞赛经历</label> <label><input type="checkbox" value="internship" v-model="compareDims"> 实习经历</label> <label><input type="checkbox" value="award" v-model="compareDims"> 获奖情况</label> <label><input type="checkbox" value="cert" v-model="compareDims"> 技能证书持有</label></div>
+                                </div>
+                                <div class="form-row"><label>对比时间范围</label><select v-model="timeRange" class="input-field"><option>全部</option><option>2024春</option><option>2024秋</option></select></div>
+                                <div class="form-row"><label>数据展示粒度</label><select v-model="granularity" class="input-field"><option>按学期</option><option>按学年</option><option>全大学周期</option></select></div>
+                                <button class="btn btn-brand" style="width:auto;" @click="runTeacherComparison">执行对比分析</button>
+
+                                <div v-if="teacherComparisonResult" class="compare-result-box">
+                                    <h4>📊 对比结论 (学生: {{ selectedStudent?.name }})</h4>
+                                    <div v-if="teacherComparisonMessage">{{ teacherComparisonMessage }}</div>
+                                    <div v-for="dim in compareDims" :key="dim" style="margin-top:12px;">
+                                        <strong>{{ getDimName(dim) }}:</strong> {{ getDimResult(dim) }}
+                                    </div>
+                                    <div class="chart-container"><canvas id="teacherCompareChart"></canvas></div>
+                                </div>
+                                <div v-if="teacherComparisonError" class="error-msg mt-4">{{ teacherComparisonError }}</div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- 模态框保持不变 -->
+        <div v-if="showCourseModal" class="modal-mask" @click.self="showCourseModal=false"><div class="modal"><h3>{{ editingCourse ? '编辑' : '添加新课程' }}</h3><div class="form-row"><label>课程名称 *</label><input v-model="courseForm.name" class="input-field"></div><div class="form-row"><label>学期 *</label><input v-model="courseForm.semester" class="input-field"></div><div class="form-row"><label>课程编号</label><input v-model="courseForm.code" class="input-field"></div><div class="form-row"><label>学分 *</label><input v-model.number="courseForm.credit" type="number" step="0.5" class="input-field"></div><div class="form-row"><label>成绩 (百分制) *</label><input v-model.number="courseForm.grade" type="number" class="input-field"></div><div class="form-row"><label>授课教师</label><input v-model="courseForm.teacher" class="input-field"></div><div class="form-row"><label>课程排名</label><input v-model="courseForm.rank" class="input-field"></div><div class="form-row"><label>备注</label><input v-model="courseForm.note" class="input-field"></div><div class="flex-row" style="justify-content:flex-end;"><button class="btn-small" @click="showCourseModal=false">取消</button><button class="btn-small" style="background:var(--color-terracotta); color:white;" @click="saveCourse">保存</button></div></div></div>
+        <div v-if="showAchieveModal" class="modal-mask" @click.self="showAchieveModal=false"><div class="modal"><h3>{{ editingAchieve ? '编辑成就' : '新增成就' }}</h3><div class="form-row"><label>成就名称 *</label><input v-model="achieveForm.name" class="input-field"></div><div class="form-row"><label>类型 *</label><select v-model="achieveForm.type" class="input-field"><option value="">请选择</option><option>奖项</option><option>竞赛</option><option>项目</option><option>证书</option><option>实习</option><option>其他</option></select></div><div class="form-row"><label>获得时间 *</label><input v-model="achieveForm.date" type="month" class="input-field"></div><div class="form-row"><label>授予单位</label><input v-model="achieveForm.org" class="input-field"></div><div class="form-row"><label>等级/角色</label><input v-model="achieveForm.level" class="input-field"></div><div class="form-row"><label>描述</label><textarea v-model="achieveForm.description" class="input-field" rows="2"></textarea></div><div class="form-row"><label>标签</label><input v-model="achieveForm.tags" class="input-field"></div><div class="form-row"><label>证明附件</label><div class="flex-row"><input type="file" @change="handleAttachment" accept=".pdf,image/*" style="display:none;" ref="fileInput"><button class="btn-small" @click="$refs.fileInput.click()">选择文件</button><span v-if="achieveForm.attachment" class="attachment-preview"><i class="fas fa-file"></i> {{ achieveForm.attachment }} <i class="fas fa-times" style="margin-left:8px; cursor:pointer;" @click="achieveForm.attachment=''"></i></span></div></div><div v-if="errors.any" class="error-msg"><i class="fas fa-exclamation-circle"></i> 请填写所有必填项</div><div class="flex-row" style="justify-content:flex-end;"><button class="btn-small" @click="cancelAchieveModal">取消</button><button class="btn-small" style="background:var(--color-terracotta); color:white;" @click="saveAchievement">保存</button></div></div></div>
+        <div v-if="showBasicModal" class="modal-mask" @click.self="showBasicModal=false"><div class="modal"><h3>编辑基本信息</h3><div class="form-row"><label>姓名 *</label><input v-model="basicInfo.name" class="input-field"></div><div class="form-row"><label>性别</label><input v-model="basicInfo.gender" class="input-field"></div><div class="form-row"><label>电话 *</label><input v-model="basicInfo.phone" class="input-field"></div><div class="form-row"><label>邮箱 *</label><input v-model="basicInfo.email" class="input-field"></div><div class="form-row"><label>求职意向</label><input v-model="basicInfo.jobTarget" class="input-field"></div><div class="form-row"><label>学校名称 *</label><input v-model="basicInfo.school" class="input-field"></div><div class="form-row"><label>专业 *</label><input v-model="basicInfo.major" class="input-field"></div><div class="form-row"><label>学历</label><input v-model="basicInfo.degree" class="input-field"></div><div class="form-row"><label>入学-毕业年份</label><input v-model="basicInfo.gradYear" class="input-field"></div><div class="form-row"><label>个人照片(可选)</label><input type="file" accept="image/*" @change="handlePhoto" style="display:none;" ref="photoInput"><button class="btn-small" @click="$refs.photoInput.click()">上传照片</button><span v-if="basicInfo.photo"> 已选</span></div><div class="flex-row" style="justify-content:flex-end;"><button class="btn-small" @click="showBasicModal=false">取消</button><button class="btn-small btn-brand" @click="saveBasicInfo">保存</button></div></div></div>
+        <div v-if="showPreviewModal" class="modal-mask" @click.self="showPreviewModal=false"><div class="modal" style="max-width:1000px;"><h3>简历完整预览</h3><div class="resume-preview" style="max-height:70vh; overflow-y:auto;"><div v-if="resumeTemplate==='single'"><h2>{{ basicInfo.name }}</h2><p>{{ basicInfo.jobTarget }} · {{ basicInfo.phone }} · {{ basicInfo.email }}</p><div class="resume-section"><h3>教育背景</h3><p><strong>{{ basicInfo.school }}</strong> · {{ basicInfo.major }} · {{ basicInfo.gradYear }} · GPA {{ computedGPA.total }}</p></div><div class="resume-section"><h3>专业技能</h3><p>{{ skillTags.join(' · ') }}</p></div><div class="resume-section"><h3>实习经历</h3><div v-for="i in internshipItems"><strong>{{ i.name }}</strong> {{ i.date }}<br>{{ i.description }}</div></div><div class="resume-section"><h3>项目经历</h3><div v-for="p in projectItems"><strong>{{ p.name }}</strong> {{ p.date }}<br>{{ p.description }}</div></div><div class="resume-section"><h3>荣誉奖项</h3><div v-for="a in awardItems">{{ a.name }} · {{ a.org }} ({{ a.date }})</div></div><div class="resume-section"><h3>证书/语言</h3><div v-for="c in certItems">{{ c.name }} · {{ c.level }} ({{ c.date }})</div></div></div><div v-else>双栏简历预览 (内容同上，布局略)</div></div><button class="btn-small" @click="showPreviewModal=false">关闭</button></div></div>
+        <div v-if="showAddStudentModal" class="modal-mask" @click.self="showAddStudentModal=false"><div class="modal"><h3>新增学生</h3><div class="form-row"><label>姓名</label><input v-model="newStudent.name" class="input-field" placeholder="如 王小明"></div><div class="form-row"><label>学号</label><input v-model="newStudent.studentId" class="input-field" placeholder="2024001"></div><div class="flex-row" style="justify-content:flex-end;"><button class="btn-small" @click="showAddStudentModal=false">取消</button><button class="btn-small btn-brand" @click="addNewStudent">添加</button></div></div></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.47/dist/vue.global.prod.js"></script>
+    <script>
+        const { createApp, ref, reactive, computed, nextTick, watch } = Vue;
+        createApp({
+            setup() {
+                const isLoggedIn = ref(false); const currentUser = ref({ name: '张三', displayName: '张三' }); const currentRole = ref('student');
+                const loginForm = reactive({ username: '', password: '', role: 'student', displayName: '' });
+                const currentPage = ref('home'); const courses = ref([]); const achievements = ref([]);
+                const expandedCourses = ref([]); const expandedAchieves = ref([]); const gradeScale = ref('gpa4');
+                const showCourseModal = ref(false); const editingCourse = ref(null);
+                const courseForm = reactive({ name:'', semester:'', code:'', credit:3, grade:85, teacher:'', rank:'', note:'' });
+                const showAchieveModal = ref(false); const editingAchieve = ref(null);
+                const achieveForm = reactive({ name:'', type:'', date:'', org:'', level:'', description:'', tags:'', attachment:'' });
+                const errors = reactive({ name: false, type: false, date: false, any: false });
+                const comparisonResult = ref(false); const compareGroup = ref('同专业'); const compareDims = ref(['gpa']);
+                const timeRange = ref('全部'); const granularity = ref('按学期');
+                const benchmarkFile = ref(null); const benchmarkGroup = ref('同专业'); const benchmarkTimeRange = ref('');
+                const importStatus = ref(null); const comparisonMessage = ref(''); const comparisonError = ref('');
+                const dimResults = reactive({});
+                const showBasicModal = ref(false); const showPreviewModal = ref(false); const resumeTemplate = ref('single');
+                const basicInfo = reactive({ name: '王语涵', gender: '女', phone: '138-0000-1234', email: 'yuhan@edu.cn', jobTarget: 'Java/Python开发工程师', school: '杭州电子科技大学', major: '计算机科学与技术', degree: '本科', gradYear: '2021.09-2025.07', photo: '' });
+                const skillTags = ref(['Python', 'Java', 'SQL', '数据分析', 'Vue.js']);
+                const teacherStudents = ref([{ id: 's1', name: '王语涵', studentId: '2024001', basic: { jobTarget:'Java开发', school:'杭州电子科技大学', major:'计算机科学与技术' }, gpa:'3.65', coreCourses:'数据结构, 数据库', internship:'阿里巴巴实习', project:'智能推荐系统', awards:'算法大赛二等奖' },{ id: 's2', name: '李思睿', studentId: '2024002', basic: { jobTarget:'前端开发', school:'某某大学', major:'软件工程' }, gpa:'3.82', coreCourses:'Web开发, 操作系统', internship:'腾讯前端', project:'电商后台', awards:'数学建模省一' }]);
+                const selectedStudentId = ref('s1'); const selectedStudent = computed(() => teacherStudents.value.find(s => s.id === selectedStudentId.value));
+                const showAddStudentModal = ref(false); const newStudent = reactive({ name: '', studentId: '' });
+                const teacherComparisonResult = ref(false); const teacherComparisonMessage = ref(''); const teacherComparisonError = ref('');
+
+                // 图表实例存储
+                const chartInstances = {};
+
+                function initData() { 
+                    courses.value = [ { id:'c1', name:'数据结构', semester:'2024春', code:'CS201', credit:4, grade:88, teacher:'李教授', rank:'5/45' }, { id:'c2', name:'数据库', semester:'2024春', credit:3, grade:92 } ]; 
+                    achievements.value = [ { id:'a1', name:'算法大赛', type:'竞赛', date:'2024-05', org:'CCF', description:'省级二等奖' }, { id:'a2', name:'智能推荐', type:'项目', date:'2024.03-2024.08', description:'协同过滤' }, { id:'a3', name:'数据分析师', type:'证书', date:'2024-08' }, { id:'a4', name:'阿里实习', type:'实习', date:'2024.07-2024.09', description:'后端开发' } ]; 
+                }
+                initData();
+
+                const sortedAchievements = computed(() => [...achievements.value].sort((a,b) => (b.date||'').localeCompare(a.date||'')));
+                const menuItems = computed(() => currentRole.value === 'student' ? [ { key:'home', label:'首页', icon:'fas fa-home' },{ key:'courses', label:'课程管理', icon:'fas fa-book' },{ key:'achievements', label:'成就管理', icon:'fas fa-trophy' },{ key:'resume', label:'简历生成', icon:'fas fa-file-alt' },{ key:'compare', label:'大众对比', icon:'fas fa-chart-bar' } ] : [ { key:'home', label:'首页', icon:'fas fa-home' },{ key:'students', label:'学生展示', icon:'fas fa-users' },{ key:'compare', label:'对比分析', icon:'fas fa-chart-line' } ]);
+                const pageTitle = computed(() => menuItems.value.find(m=>m.key===currentPage.value)?.label);
+                const roleDisplayName = computed(() => currentRole.value==='student'?'学生':'教师');
+                const gradeToGpa = (g) => { if(g>=90) return 4.0; if(g>=85) return 3.7; if(g>=82) return 3.3; if(g>=78) return 3.0; if(g>=75) return 2.7; if(g>=72) return 2.3; if(g>=68) return 2.0; return 1.0; };
+                const computedStats = computed(() => { if(!courses.value.length) return { totalGpa:'0.00' }; let tp=0,tc=0; courses.value.forEach(c=>{ let gp=gradeToGpa(Number(c.grade)); tp+=gp*Number(c.credit); tc+=Number(c.credit); }); return { totalGpa: tc?(tp/tc).toFixed(2):'0.00' }; });
+                const computedGPA = computed(() => ({ total: computedStats.value.totalGpa }));
+                const leftTitle = computed(()=> gradeScale.value==='gpa4'?'总学期平均绩点':'总学期平均成绩'); const rightTitle = computed(()=> '本学期GPA');
+                const leftValue = computed(()=> gradeScale.value==='gpa4'?computedStats.value.totalGpa:'85.2'); const rightValue = ref('3.45');
+                const gpaDisplayValue = computed(()=> leftValue.value); const gpaDisplayLabel = computed(()=> gradeScale.value==='gpa4'?'GPA':'平均分');
+                const totalCredits = computed(()=> courses.value.reduce((s,c)=> s+Number(c.credit),0));
+                const coreCourses = computed(()=> courses.value.slice(0,2).map(c=>c.name).join('、'));
+                const internshipItems = computed(()=> achievements.value.filter(a=> a.type==='实习'));
+                const projectItems = computed(()=> achievements.value.filter(a=> a.type==='项目'));
+                const awardItems = computed(()=> achievements.value.filter(a=> a.type==='竞赛'||a.type==='奖项'));
+                const certItems = computed(()=> achievements.value.filter(a=> a.type==='证书'));
+                const missingFields = computed(()=> []); const exportFileName = computed(()=> `${basicInfo.name}_简历.pdf`);
+
+                const handleLogin = ()=>{ if(!loginForm.username||!loginForm.password) {alert('请输入');return;} if(loginForm.password!=='123'){alert('密码123');return;} currentUser.value = { name: loginForm.username==='student'?'张三同学':'李老师', displayName: loginForm.displayName||'用户' }; currentRole.value = loginForm.role; isLoggedIn.value = true; currentPage.value = currentRole.value==='student'?'home':'home'; };
+                const logout = ()=> isLoggedIn.value = false;
+                const toggleCourseDetail=(id)=>{ const i=expandedCourses.value.indexOf(id); i>-1?expandedCourses.value.splice(i,1):expandedCourses.value.push(id); };
+                const toggleAchieveDetail=(id)=>{ const i=expandedAchieves.value.indexOf(id); i>-1?expandedAchieves.value.splice(i,1):expandedAchieves.value.push(id); };
+                const getGpaPoint = (c) => gradeToGpa(Number(c.grade)).toFixed(1);
+                const openAddCourseModal=()=>{ editingCourse.value=null; showCourseModal.value=true; };
+                const editCourse=(c)=>{ editingCourse.value=c; Object.assign(courseForm, c); showCourseModal.value=true; };
+                const saveCourse=()=>{ if(!courseForm.name) return; if(editingCourse.value) Object.assign(editingCourse.value, courseForm); else courses.value.unshift({...courseForm, id:'c'+Date.now()}); showCourseModal.value=false; };
+                const deleteCourse=(id)=>{ if(confirm('删除？')) courses.value=courses.value.filter(c=>c.id!==id); };
+                const openAddAchievementModal = ()=>{ editingAchieve.value=null; showAchieveModal.value=true; };
+                const editAchievement = (ach)=>{ editingAchieve.value=ach; Object.assign(achieveForm, ach); showAchieveModal.value=true; };
+                const handleAttachment = (e) => { if(e.target.files[0]) achieveForm.attachment = e.target.files[0].name; };
+                const previewAttachment = (ach) => alert(`预览: ${ach.attachment}`);
+                const cancelAchieveModal = ()=> showAchieveModal.value = false;
+                const saveAchievement = ()=>{ if(!achieveForm.name) return; if(editingAchieve.value) Object.assign(editingAchieve.value, achieveForm); else achievements.value.push({...achieveForm, id:'a'+Date.now()}); showAchieveModal.value=false; };
+                const deleteAchievement = (id)=>{ if(confirm('删除？')) achievements.value=achievements.value.filter(a=>a.id!==id); };
+                const openBasicInfoModal = ()=> showBasicModal.value=true;
+                const saveBasicInfo = ()=> showBasicModal.value=false;
+                const handlePhoto = (e)=> { if(e.target.files[0]) basicInfo.photo = e.target.files[0].name; };
+                const previewFullResume = ()=> showPreviewModal.value=true;
+                const exportResume = (f)=> alert(`导出${f}: ${exportFileName.value}`);
+                const handleBenchmarkFile = (e) => benchmarkFile.value = e.target.files[0];
+                const importBenchmark = ()=> { importStatus.value = { success: true, successCount: 128, failCount: 2 }; };
+                const getDimName = (dim) => ({ gpa:'GPA排名', course:'课程修读', competition:'竞赛经历', internship:'实习经历', award:'获奖情况', cert:'证书持有' }[dim]);
+                const getDimResult = (dim) => dimResults[dim] || '暂无对比数据';
+                const runComparison = ()=> { comparisonResult.value = true; comparisonMessage.value = '你的GPA处于同专业前20%'; dimResults.gpa = '个人 3.65，群体均值 3.32，处于前20%'; updateCharts(); };
+                const openAddStudentModal = ()=> { newStudent.name=''; newStudent.studentId=''; showAddStudentModal.value=true; };
+                const addNewStudent = ()=> { if(!newStudent.name||!newStudent.studentId) return; teacherStudents.value.push({ id:'s'+Date.now(), name:newStudent.name, studentId:newStudent.studentId, basic:{}, gpa:'3.0', coreCourses:'', internship:'', project:'', awards:'' }); showAddStudentModal.value=false; };
+                const runTeacherComparison = ()=> { teacherComparisonResult.value = true; teacherComparisonMessage.value = `${selectedStudent.value?.name} 的GPA处于前25%`; updateTeacherChart(); };
+
+                // 图表更新函数
+                function updateCharts() {
+                    nextTick(() => {
+                        try {
+                            // 学生课程趋势图
+                            const canvas1 = document.getElementById('studentGpaChart');
+                            if (canvas1) {
+                                const ctx = canvas1.getContext('2d');
+                                if (chartInstances.studentGpa) chartInstances.studentGpa.destroy();
+                                const semesters = ['2024春', '2024秋'];
+                                const gpaData = [3.5, 3.8];
+                                chartInstances.studentGpa = new Chart(ctx, { type: 'bar', data: { labels: semesters, datasets: [{ label: '学期GPA', data: gpaData, backgroundColor: '#c96442' }] }, options: { responsive: true, maintainAspectRatio: false } });
+                            }
+                            // 对比图表
+                            const canvas2 = document.getElementById('compareChart');
+                            if (canvas2) {
+                                const ctx = canvas2.getContext('2d');
+                                if (chartInstances.compare) chartInstances.compare.destroy();
+                                chartInstances.compare = new Chart(ctx, { type: 'bar', data: { labels: ['GPA'], datasets: [{ label: '个人', data: [3.65] }, { label: '群体均值', data: [3.32] }] }, options: { responsive: true, maintainAspectRatio: false } });
+                            }
+                            // 教师对比图表
+                            const canvas3 = document.getElementById('teacherCompareChart');
+                            if (canvas3) {
+                                const ctx = canvas3.getContext('2d');
+                                if (chartInstances.teacherCompare) chartInstances.teacherCompare.destroy();
+                                const studentGpa = parseFloat(selectedStudent.value?.gpa) || 3.5;
+                                chartInstances.teacherCompare = new Chart(ctx, { type: 'bar', data: { labels: ['GPA'], datasets: [{ label: '个人', data: [studentGpa] }, { label: '群体均值', data: [3.32] }] }, options: { responsive: true, maintainAspectRatio: false } });
+                            }
+                        } catch(e) { console.warn('Chart update error', e); }
+                    });
+                }
+                function updateTeacherChart() { updateCharts(); }
+
+                // 监听页面切换和课程变化，更新图表
+                watch([currentPage, courses, achievements, gradeScale, comparisonResult, teacherComparisonResult], () => updateCharts(), { deep: true });
+
+                return { isLoggedIn, currentUser, currentRole, loginForm, currentPage, menuItems, pageTitle, roleDisplayName, courses, achievements, sortedAchievements, expandedCourses, expandedAchieves, gradeScale, leftTitle, rightTitle, leftValue, rightValue, gpaDisplayValue, gpaDisplayLabel, totalCredits, compareGroup, compareDims, timeRange, granularity, comparisonResult, comparisonMessage, comparisonError, benchmarkFile, benchmarkGroup, benchmarkTimeRange, importStatus, showCourseModal, courseForm, showAchieveModal, achieveForm, errors, showBasicModal, showPreviewModal, resumeTemplate, basicInfo, skillTags, coreCourses, internshipItems, projectItems, awardItems, certItems, missingFields, exportFileName, computedGPA, teacherStudents, selectedStudentId, selectedStudent, showAddStudentModal, newStudent, teacherComparisonResult, teacherComparisonMessage, teacherComparisonError, handleLogin, logout, toggleCourseDetail, toggleAchieveDetail, getGpaPoint, openAddCourseModal, editCourse, saveCourse, deleteCourse, openAddAchievementModal, editAchievement, saveAchievement, deleteAchievement, handleAttachment, previewAttachment, cancelAchieveModal, openBasicInfoModal, saveBasicInfo, handlePhoto, previewFullResume, exportResume, handleBenchmarkFile, importBenchmark, runComparison, getDimName, getDimResult, openAddStudentModal, addNewStudent, runTeacherComparison, updateScale:()=>{} };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
