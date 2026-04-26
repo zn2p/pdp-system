@@ -24,12 +24,6 @@ if exist "%PY%" (
 )
 
 echo.
-echo [2] Running tests...
-"%PYTEST%" tests/ -q
-set TEST_EXIT=%errorlevel%
-echo Test result: %TEST_EXIT%
-
-echo.
 echo [3] Initializing database...
 "%PY%" -m app.db.init_db
 
@@ -43,8 +37,7 @@ echo Starting backend...
 start "PDP Backend" "%UVICORN%" app.main:app --host 127.0.0.1 --port 8001
 
 echo Starting frontend...
-cd /d D:\github\pdp-system\frontend
-start "PDP Frontend" "%PY%" -m http.server 5500 --bind 127.0.0.1
+start "PDP Frontend" "%PY%" D:\github\pdp-system\frontend\serve.py
 
 cd /d D:\github\pdp-system
 

@@ -5,23 +5,13 @@ export const teacherTemplate = `
             <div class="hero-left"><div class="card"><h1 style="font-size:48px;">教师工作台<br><span style="font-size:18px; font-weight:normal;">数据驱动 · 精准指导</span></h1><div class="desc" style="margin-top:auto;">查看所带学生的成长数据，快速定位学业情况，为个性化辅导提供依据。</div></div></div>
             <div class="hero-right"><div class="card"><h2>📊 今日概览</h2><div class="stats-grid"><div class="stat-mini"><strong>{{ teacherStudents.length }}</strong>学生数</div><div class="stat-mini"><strong>3.48</strong>平均GPA</div><div class="stat-mini"><strong>12</strong>预警</div><div class="stat-mini"><strong>5</strong>优秀</div></div></div></div>
         </div>
-        <div class="kpi-grid">
-            <div v-for="item in teacherHomeCards" :key="item.label" class="kpi-card clickable-card" @click="currentPage = item.page">
-                <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-                <p>{{ item.desc }}</p>
-            </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div class="card" style="cursor:pointer;" @click="currentPage='students'"><h3><i class="fas fa-users"></i> 学生展示</h3><p class="text-muted">简历卡片式浏览所有学生档案，快速了解能力画像。</p></div>
+            <div class="card" style="cursor:pointer;" @click="currentPage='compare'"><h3><i class="fas fa-chart-line"></i> 对比分析</h3><p class="text-muted">导入基准数据，多维度对比学生与群体水平。</p></div>
         </div>
     </div>
 
     <div v-if="currentPage === 'students'">
-        <div class="kpi-grid">
-            <div v-for="item in teacherStudentStats" :key="item.label" class="kpi-card">
-                <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-                <p>{{ item.desc }}</p>
-            </div>
-        </div>
         <div class="card">
             <h3><i class="fas fa-users"></i> 学生展示 (简历视图)</h3>
             <div class="student-resume-grid">
@@ -44,13 +34,6 @@ export const teacherTemplate = `
     </div>
 
     <div v-if="currentPage === 'compare'">
-        <div class="kpi-grid">
-            <div v-for="item in teacherCompareStats" :key="item.label" class="kpi-card">
-                <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-                <p>{{ item.desc }}</p>
-            </div>
-        </div>
         <div class="card">
             <div class="flex-row" style="justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 12px;">

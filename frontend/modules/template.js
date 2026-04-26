@@ -1,20 +1,26 @@
 import { loginTemplate } from "./templates/login.js";
+import { registerTemplate } from "./templates/register.js";
 import { studentTemplate } from "./templates/student.js";
 import { teacherTemplate } from "./templates/teacher.js";
 import { modalsTemplate } from "./templates/modals.js";
 
 export const appTemplate = `
 <div>
+    <div style="position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div v-for="t in toasts" :key="t.id"
+             :style="t.type==='success'
+               ? 'display:flex;align-items:center;gap:10px;padding:13px 22px;border-radius:14px;font-size:14px;font-family:inherit;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,0.12);border:1px solid #d1cfc5;background:#faf9f5;color:#141413;pointer-events:auto;'
+               : 'display:flex;align-items:center;gap:10px;padding:13px 22px;border-radius:14px;font-size:14px;font-family:inherit;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,0.12);border:1px solid #f0c4bb;background:#fff5f3;color:#b53333;pointer-events:auto;'">
+            <span :style="t.type==='success' ? 'color:#5a9e6f;font-size:16px;' : 'color:#b53333;font-size:16px;'">{{ t.type === 'success' ? '✓' : '✕' }}</span>
+            <span>{{ t.text }}</span>
+        </div>
+    </div>
+    ${registerTemplate}
     ${loginTemplate}
 
-    <div v-else class="app-layout">
+    <div v-if="isLoggedIn" class="app-layout">
         <aside class="sidebar">
             <div class="brand"><span class="brand-mark">G</span> GrowthLink</div>
-            <div class="role-summary-card">
-                <div class="module-eyebrow">模块4</div>
-                <strong>{{ roleDisplayName }}视图</strong>
-                <p class="text-muted">当前菜单、数据卡片与分析入口已按角色组织。</p>
-            </div>
             <div style="flex:1;">
                 <div v-for="item in menuItems" :key="item.key" class="menu-item" :class="{active: currentPage === item.key}" @click="currentPage = item.key">
                     <i :class="item.icon"></i> {{ item.label }}
@@ -29,19 +35,6 @@ export const appTemplate = `
 
         <main class="main-content">
             <h2 class="page-title">{{ pageTitle }}</h2>
-            <div class="module-banner">
-                <div>
-                    <div class="module-eyebrow">{{ activeModule.module }}</div>
-                    <div class="module-heading-row">
-                        <h3>{{ activeModule.heading }}</h3>
-                        <span class="module-badge">{{ roleDisplayName }}视图</span>
-                    </div>
-                    <p class="module-description">{{ activeModule.description }}</p>
-                </div>
-                <div class="module-badges">
-                    <span v-for="tag in activeModule.tags" :key="tag" class="module-badge">{{ tag }}</span>
-                </div>
-            </div>
 
             ${studentTemplate}
             ${teacherTemplate}

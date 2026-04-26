@@ -233,3 +233,12 @@ body { background: var(--bg-page); color: var(--text-primary); font-family: var(
         padding: 24px;
     }
 }
+
+/* Toast notification */
+.toast-wrap { position: fixed; top: 28px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.toast { display: flex; align-items: center; gap: 10px; padding: 13px 22px; border-radius: 14px; font-size: 14px; font-family: var(--font-sans); font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,0.12); border: 1px solid; pointer-events: auto; animation: toast-in .22s cubic-bezier(.4,0,.2,1); }
+.toast.success { background: var(--color-ivory); color: var(--color-near-black); border-color: var(--color-ring-warm); }
+.toast.success .toast-icon { color: #5a9e6f; font-size: 16px; }
+.toast.error   { background: #fff5f3; color: #b53333; border-color: #f0c4bb; }
+.toast.error   .toast-icon { color: #b53333; font-size: 16px; }
+@keyframes toast-in { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }

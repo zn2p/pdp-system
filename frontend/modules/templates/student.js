@@ -5,23 +5,14 @@ export const studentTemplate = `
             <div class="hero-left"><div class="card"><h1 style="font-size:48px;">成长数据<br>可视化</h1><div class="desc" style="margin-top:auto;">围绕大学生个人成长与发展需求，帮助用户管理并分析自己的成绩与成就，与大众进行对比从而更清晰地了解自己的水平并规划未来的发展。</div></div></div>
             <div class="hero-right"><div class="card"><h2>📊 学业概览</h2><div class="stats-grid"><div class="stat-mini"><strong>{{ gpaDisplayValue }}</strong>{{ gpaDisplayLabel }}</div><div class="stat-mini"><strong>{{ courses.length }}</strong>课程</div><div class="stat-mini"><strong>{{ achievements.length }}</strong>成就</div><div class="stat-mini"><strong>Top 15%</strong>排名</div></div></div></div>
         </div>
-        <div class="kpi-grid">
-            <div v-for="item in studentHomeCards" :key="item.label" class="kpi-card">
-                <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-                <p>{{ item.desc }}</p>
-            </div>
+        <div style="display: grid; grid-template-columns: repeat(3,1fr); gap: 18px;">
+            <div class="card"><h3>课程管理</h3><p class="text-muted">记录成绩并自动计算 GPA。</p></div>
+            <div class="card"><h3>大众对比</h3><p class="text-muted">查看与同专业学生的能力差距。</p></div>
+            <div class="card"><h3>展示视图</h3><p class="text-muted">为教师快速呈现重点。</p></div>
         </div>
     </div>
 
     <div v-if="currentPage === 'courses'">
-        <div class="kpi-grid">
-            <div v-for="item in courseOverviewStats" :key="item.label" class="kpi-card">
-                <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-                <p>{{ item.desc }}</p>
-            </div>
-        </div>
         <div class="gpa-card">
             <div style="display: flex; justify-content: space-between;">
                 <div><div>{{ leftTitle }}</div><div style="font-family: var(--font-serif); font-size: 54px;">{{ leftValue }}</div><div>总学分 {{ totalCredits }} · 课程 {{ courses.length }}</div></div>
@@ -55,13 +46,6 @@ export const studentTemplate = `
     </div>
 
     <div v-if="currentPage === 'achievements'">
-        <div class="kpi-grid">
-            <div v-for="item in achievementOverviewStats" :key="item.label" class="kpi-card">
-                <span>{{ item.label }}</span>
-                <strong>{{ item.value }}</strong>
-                <p>{{ item.desc }}</p>
-            </div>
-        </div>
         <div class="card">
             <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
                 <h3><i class="fas fa-medal"></i> 成就与经历</h3>
@@ -90,29 +74,6 @@ export const studentTemplate = `
     </div>
 
     <div v-if="currentPage === 'resume'">
-        <div class="workbench-grid">
-            <div class="aside-panel">
-                <div class="section-header">
-                    <h3>模块完成度</h3>
-                    <span class="module-badge">{{ profileCompletionRate }}%</span>
-                </div>
-                <ul class="summary-list">
-                    <li v-for="field in resumeChecklist" :key="field.label">
-                        <span>{{ field.label }}</span>
-                        <strong>{{ field.value }}</strong>
-                    </li>
-                </ul>
-            </div>
-            <div class="aside-panel">
-                <div class="section-header">
-                    <h3>已纳入简历模块</h3>
-                    <span class="module-badge">{{ resumeOverviewStats.length }}项</span>
-                </div>
-                <div class="chip-list">
-                    <span v-for="item in resumeOverviewStats" :key="item.label" class="chip">{{ item.label }} · {{ item.value }}</span>
-                </div>
-            </div>
-        </div>
         <div class="card">
             <h3 style="color: #141413;"><i class="fas fa-file-alt"></i> 简历配置与生成</h3>
             <div class="flex-row" style="margin-bottom:20px;">
