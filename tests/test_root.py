@@ -12,7 +12,8 @@ def setup_module():
 def test_root():
     r = client.get("/")
     assert r.status_code == 200
-    assert r.json().get("message") == "pdp-system"
+    assert "text/html" in r.headers["content-type"]
+    assert "<div id=\"app\"></div>" in r.text
 
 
 def test_health():

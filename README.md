@@ -1,3 +1,31 @@
+# GrowthLink — 后端骨架
+
+快速上手：
+
+1. 创建并激活 Python 环境（推荐 Python 3.11）
+
+```bash
+python -m venv .venv311
+.venv311\Scripts\activate
+pip install -r requirements.txt
+```
+
+2. 初始化数据库并创建示例用户
+
+```bash
+python -m app.db.init_db
+```
+
+示例账户：`student` / `123`
+
+3. 运行开发服务器
+
+```bash
+uvicorn app.main:app --reload
+```
+
+打开系统首页: http://127.0.0.1:8000  
+API 文档: http://127.0.0.1:8000/docs
 # pdp-system
 Personal Development Planning System
 
@@ -38,6 +66,8 @@ Personal Development Planning System
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
+
+默认部署形态为**单服务部署**：FastAPI 会直接托管 `frontend` 目录下的前端静态资源，因此正式部署时只需要启动后端服务并访问根路径 `/`，不需要再单独启动一个前端静态服务器。
 
 运行测试：
 
