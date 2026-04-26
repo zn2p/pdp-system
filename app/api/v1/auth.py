@@ -13,9 +13,13 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 def login(form: dict, db: Session = Depends(get_db)):
     username = form.get("username")
     password = form.get("password")
+    role = form.get("role")
     if not username or not password:
         raise HTTPException(status_code=400, detail="username and password required")
-    user = db.query(User).filter(User.username == username).first()
+    query = db.query(User).filter(User.username == username)
+    if role:
+        query = query.filter(User.role == role)
+    user = query.first()
     if not user or not verify_password(password, user.password_hash):
         raise HTTPException(status_code=401, detail="invalid credentials")
     token = create_access_token(subject=user.id)

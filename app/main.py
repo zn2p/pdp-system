@@ -1,7 +1,13 @@
+import mimetypes
+
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from app.api.v1.routes import router as api_router
@@ -28,6 +34,14 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 FRONTEND_INDEX = FRONTEND_DIR / "index.html"
 
 
+class SPAStaticFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if response.status_code == 404 and FRONTEND_INDEX.is_file():
+            return FileResponse(FRONTEND_INDEX)
+        return response
+
+
 app = FastAPI(title="pdp-system API")
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(auth_router)
@@ -51,28 +65,8 @@ def on_startup():
     init_db()
 
 
-@app.get("/", include_in_schema=False)
-def read_root():
-    if FRONTEND_INDEX.is_file():
-        return FileResponse(FRONTEND_INDEX)
-    return {"message": "pdp-system"}
-
-
-@app.get("/{full_path:path}", include_in_schema=False)
-def serve_frontend(full_path: str):
-    if not FRONTEND_DIR.is_dir():
-        return {"message": "pdp-system"}
-
-    asset_path = (FRONTEND_DIR / full_path).resolve()
-    try:
-        asset_path.relative_to(FRONTEND_DIR.resolve())
-    except ValueError:
-        return FileResponse(FRONTEND_INDEX)
-
-    if asset_path.is_file():
-        return FileResponse(asset_path)
-
-    return FileResponse(FRONTEND_INDEX)
+if FRONTEND_DIR.is_dir():
+    app.mount("/", SPAStaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 
 if __name__ == "__main__":

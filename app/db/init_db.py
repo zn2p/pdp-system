@@ -22,18 +22,27 @@ def init_db():
     logger.info("Registered tables after create_all: %s", list(Base.metadata.tables.keys()))
     db = SessionLocal()
     try:
-        # create demo user if not exists
-        if not db.query(User).filter(User.username == 'student').first():
-            u = User(username='student', password_hash=get_password_hash('123'), display_name='学生示例', role='student', email='student@example.com')
+        # create UIBE student user
+        if not db.query(User).filter(User.username == 'UIBE', User.role == 'student').first():
+            u = User(username='UIBE', password_hash=get_password_hash('123'), display_name='UIBE学生', role='student', email='student@uibe.edu.cn')
             db.add(u)
             db.commit()
             db.refresh(u)
-            s = Student(user_id=u.id, student_id='2024001', school='示例大学', major='计算机')
+            s = Student(user_id=u.id, student_id='UIBE001', school='对外经济贸易大学', major='计算机科学与技术')
             db.add(s)
             db.commit()
-            logger.info('Demo user and student created: %s', u.username)
+            logger.info('Created UIBE student user')
         else:
-            logger.info('Demo user already exists')
+            logger.info('UIBE student already exists')
+
+        # create UIBE staff user
+        if not db.query(User).filter(User.username == 'UIBE', User.role == 'staff').first():
+            u = User(username='UIBE', password_hash=get_password_hash('123'), display_name='UIBE教师', role='staff', email='staff@uibe.edu.cn')
+            db.add(u)
+            db.commit()
+            logger.info('Created UIBE staff user')
+        else:
+            logger.info('UIBE staff already exists')
     except IntegrityError:
         db.rollback()
         logger.exception('IntegrityError during DB init')

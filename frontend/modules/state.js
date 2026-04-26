@@ -234,7 +234,7 @@ export function useAppState() {
         try {
             const data = await apiFetch("/api/v1/auth/login", {
                 method: "POST",
-                body: JSON.stringify({ username: loginForm.username, password: loginForm.password })
+                body: JSON.stringify({ username: loginForm.username, password: loginForm.password, role: loginForm.role })
             });
             token.value = data.access_token;
             localStorage.setItem("pdp_token", token.value);
