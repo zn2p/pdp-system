@@ -7,6 +7,7 @@ from app.models.student import Student
 from app.models.course import Course
 from app.models.achievement import Achievement
 from app.models.file import File as FileModel
+from app.models.teacher_student import TeacherStudent
 from app.core.security import get_password_hash
 import logging
 

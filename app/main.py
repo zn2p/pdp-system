@@ -16,6 +16,7 @@ from app.api.v1.students import router as students_router
 from app.api.v1.courses import router as courses_router
 from app.api.v1.achievements import router as achievements_router
 from app.api.v1.files import router as files_router
+from app.api.v1.teachers import router as teachers_router
 from app.db.init_db import init_db
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -49,6 +50,7 @@ app.include_router(students_router)
 app.include_router(courses_router)
 app.include_router(achievements_router)
 app.include_router(files_router)
+app.include_router(teachers_router)
 
 # Allow local frontend development origins
 app.add_middleware(

@@ -4,9 +4,22 @@ const { ref, reactive, computed, nextTick, watch } = window.Vue;
 
 export function useAppState() {
     const isLoggedIn = ref(false);
+    const showRegister = ref(false);
+    const toasts = ref([]);
+
+    function showToast(text, type = "success", duration = 3000) {
+        const id = Date.now();
+        toasts.value.push({ id, text, type });
+        setTimeout(() => {
+            toasts.value = toasts.value.filter(t => t.id !== id);
+        }, duration);
+    }
+
     const currentUser = ref({ name: "张三", displayName: "张三" });
     const currentRole = ref("student");
     const loginForm = reactive({ username: "", password: "", role: "student", displayName: "" });
+    const registerForm = reactive({ username: "", password: "", confirm: "", role: "student" });
+    const registerError = ref("");
     const currentPage = ref("home");
     const courses = ref([]);
     const achievements = ref([]);
@@ -42,6 +55,18 @@ export function useAppState() {
     const selectedStudent = computed(() => teacherStudents.value.find((student) => student.id === selectedStudentId.value));
     const showAddStudentModal = ref(false);
     const newStudent = reactive({ name: "", studentId: "" });
+    const availableStudents = ref([]);
+    const selectedPickStudentId = ref(null);
+    const studentPickerQuery = ref("");
+    const addStudentError = ref("");
+    const filteredAvailableStudents = computed(() => {
+        const q = studentPickerQuery.value.trim().toLowerCase();
+        const alreadyIds = new Set(teacherStudents.value.map(s => s.id));
+        return availableStudents.value.filter(s =>
+            !alreadyIds.has(s.student_record_id) &&
+            (!q || (s.name || '').toLowerCase().includes(q) || (s.student_id || '').toLowerCase().includes(q))
+        );
+    });
     const teacherComparisonResult = ref(false);
     const teacherComparisonMessage = ref("");
     const teacherComparisonError = ref("");
@@ -248,13 +273,59 @@ export function useAppState() {
                 if (target) {
                     await fetchStudentProfile(target.id);
                 }
+            } else if (currentRole.value === "staff") {
+                try {
+                    const myStudents = await apiFetch("/api/v1/teachers/my-students");
+                    teacherStudents.value = myStudents.map(s => ({
+                        id: s.id,
+                        name: s.name,
+                        studentId: s.student_id,
+                        basic: { school: s.school, major: s.major },
+                        gpa: "3.0",
+                        coreCourses: "",
+                        internship: "",
+                        project: "",
+                        awards: ""
+                    }));
+                } catch (e) {
+                    console.warn("Failed to fetch teacher students", e);
+                }
             }
             isLoggedIn.value = true;
             currentPage.value = "home";
             updateCharts();
         } catch (err) {
             console.error("login error", err);
-            alert("登录失败：" + (err.message || err));
+            showToast("登录失败：" + (err.message || err), "error");
+        }
+    }
+
+    async function handleRegister() {
+        registerError.value = "";
+        if (!registerForm.username || !registerForm.password) {
+            registerError.value = "请填写用户名和密码";
+            return;
+        }
+        if (registerForm.password !== registerForm.confirm) {
+            registerError.value = "两次密码输入不一致";
+            return;
+        }
+        try {
+            await apiFetch("/api/v1/auth/register", {
+                method: "POST",
+                body: JSON.stringify({
+                    username: registerForm.username,
+                    password: registerForm.password,
+                    role: registerForm.role,
+                    display_name: registerForm.username
+                })
+            });
+            showRegister.value = false;
+            Object.assign(registerForm, { username: "", password: "", confirm: "", role: "student" });
+            showToast("注册成功，请登录");
+        } catch (err) {
+            const msg = err.message || "注册失败";
+            registerError.value = msg.includes("409") ? "用户名已存在" : msg;
         }
     }
 
@@ -373,25 +444,42 @@ export function useAppState() {
         updateCharts();
     };
 
-    const openAddStudentModal = () => {
-        newStudent.name = "";
-        newStudent.studentId = "";
+    const openAddStudentModal = async () => {
+        selectedPickStudentId.value = null;
+        studentPickerQuery.value = "";
+        addStudentError.value = "";
         showAddStudentModal.value = true;
+        try {
+            availableStudents.value = await apiFetch("/api/v1/teachers/available-students");
+        } catch (e) {
+            addStudentError.value = "加载学生列表失败: " + (e.message || e);
+        }
     };
-    const addNewStudent = () => {
-        if (!newStudent.name || !newStudent.studentId) return;
-        teacherStudents.value.push({
-            id: "s" + Date.now(),
-            name: newStudent.name,
-            studentId: newStudent.studentId,
-            basic: {},
-            gpa: "3.0",
-            coreCourses: "",
-            internship: "",
-            project: "",
-            awards: ""
-        });
-        showAddStudentModal.value = false;
+    const addNewStudent = async () => {
+        if (!selectedPickStudentId.value) return;
+        addStudentError.value = "";
+        try {
+            const s = await apiFetch("/api/v1/teachers/my-students", {
+                method: "POST",
+                body: JSON.stringify({ student_record_id: selectedPickStudentId.value })
+            });
+            teacherStudents.value.push({
+                id: s.id,
+                name: s.name,
+                studentId: s.student_id,
+                basic: { school: s.school, major: s.major },
+                gpa: "3.0",
+                coreCourses: "",
+                internship: "",
+                project: "",
+                awards: ""
+            });
+            showAddStudentModal.value = false;
+            showToast(`已将 ${s.name} 添加到学生清单`);
+        } catch (e) {
+            const msg = e.message || "";
+            addStudentError.value = msg.includes("409") ? "该学生已在您的清单中" : "添加失败: " + msg;
+        }
     };
     const runTeacherComparison = () => {
         teacherComparisonResult.value = true;
@@ -464,9 +552,14 @@ export function useAppState() {
 
     return {
         isLoggedIn,
+        showRegister,
+        toasts,
+        showToast,
         currentUser,
         currentRole,
         loginForm,
+        registerForm,
+        registerError,
         currentPage,
         menuItems,
         pageTitle,
@@ -532,10 +625,16 @@ export function useAppState() {
         selectedStudent,
         showAddStudentModal,
         newStudent,
+        availableStudents,
+        selectedPickStudentId,
+        studentPickerQuery,
+        filteredAvailableStudents,
+        addStudentError,
         teacherComparisonResult,
         teacherComparisonMessage,
         teacherComparisonError,
         handleLogin,
+        handleRegister,
         logout,
         toggleCourseDetail,
         toggleAchieveDetail,
