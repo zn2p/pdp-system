@@ -13,6 +13,7 @@ class UserCreate(BaseModel):
     password: str
     display_name: Optional[str]
     role: Optional[str] = "student"
+    student_id: Optional[str] = None
 
 
 class UserOut(BaseModel):

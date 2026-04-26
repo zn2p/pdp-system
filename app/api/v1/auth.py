@@ -26,7 +26,7 @@ def register(body: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
     if role == "student":
-        s = Student(user_id=user.id, student_id=body.username)
+        s = Student(user_id=user.id, student_id=body.student_id or body.username)
         db.add(s)
         db.commit()
     return user

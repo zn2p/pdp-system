@@ -17,7 +17,7 @@ export function useAuth({ showToast }) {
     const currentUser = ref({ name: "", displayName: "" });
     const currentRole = ref("student");
     const loginForm = reactive({ username: "", password: "", role: "student", displayName: "" });
-    const registerForm = reactive({ username: "", password: "", confirm: "", role: "student" });
+    const registerForm = reactive({ username: "", password: "", confirm: "", role: "student", student_id: "" });
     const registerError = ref("");
 
     /**
@@ -54,6 +54,10 @@ export function useAuth({ showToast }) {
             registerError.value = "请填写用户名和密码";
             return;
         }
+        if (registerForm.role === "student" && !registerForm.student_id) {
+            registerError.value = "请填写学号";
+            return;
+        }
         if (registerForm.password !== registerForm.confirm) {
             registerError.value = "两次密码输入不一致";
             return;
@@ -65,11 +69,12 @@ export function useAuth({ showToast }) {
                     username: registerForm.username,
                     password: registerForm.password,
                     role: registerForm.role,
-                    display_name: registerForm.username
+                    display_name: registerForm.username,
+                    student_id: registerForm.role === "student" ? registerForm.student_id : undefined
                 })
             });
             showRegister.value = false;
-            Object.assign(registerForm, { username: "", password: "", confirm: "", role: "student" });
+            Object.assign(registerForm, { username: "", password: "", confirm: "", role: "student", student_id: "" });
             showToast("注册成功，请登录");
         } catch (err) {
             const msg = err.message || "注册失败";

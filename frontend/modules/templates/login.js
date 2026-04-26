@@ -2,7 +2,7 @@ export const loginTemplate = `
 <div v-if="!isLoggedIn && !showRegister" class="login-container">
     <div class="brand-login">🎓 GrowthLink</div>
     <div style="color: var(--text-tertiary, #87867f); margin-bottom: 32px;">学生 · 教师 · 数据驱动成长</div>
-    <div><label class="input-label">用户名</label><input v-model="loginForm.username" class="input-field" placeholder="学号/工号"></div>
+    <div><label class="input-label">用户名</label><input v-model="loginForm.username" class="input-field" placeholder="用户名"></div>
     <div><label class="input-label">密码</label><input v-model="loginForm.password" type="password" class="input-field" placeholder="密码"></div>
     <label class="input-label">身份</label>
     <div class="role-switch">
