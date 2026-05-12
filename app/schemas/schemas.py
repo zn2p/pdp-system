@@ -33,6 +33,7 @@ class CourseCreate(BaseModel):
     credit: Optional[float]
     grade: Optional[float]
     teacher: Optional[str]
+    rank: Optional[str]
     note: Optional[str]
 
 
@@ -41,8 +42,12 @@ class CourseOut(BaseModel):
     student_id: int
     name: str
     semester: Optional[str]
+    code: Optional[str]
     credit: Optional[float]
     grade: Optional[float]
+    teacher: Optional[str]
+    rank: Optional[str]
+    note: Optional[str]
 
     class Config:
         orm_mode = True

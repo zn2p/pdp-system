@@ -111,7 +111,7 @@ def remove_my_student(student_record_id: int, db: Session = Depends(get_db), tea
         TeacherStudent.student_id == student_record_id
     ).first()
     if not rel:
-        raise HTTPException(status_code=404, detail="Not in your student list")
+        return None
     db.delete(rel)
     db.commit()
     return None

@@ -12,20 +12,32 @@ function createInitialAchievements() {
     ];
 }
 
-export function useAchievements({ onDataChanged } = {}) {
+export function useAchievements({ apiFetch, currentStudentId, onDataChanged } = {}) {
     const achievements = ref([]);
     const expandedAchieves = ref([]);
     const showAchieveModal = ref(false);
     const editingAchieve = ref(null);
+    const showDeleteAchieveConfirm = ref(false);
+    const pendingDeleteAchieveId = ref(null);
+    const deleteAchieveError = ref("");
     const achieveForm = reactive({
         name: "", type: "", date: "", org: "", level: "", description: "", tags: "", attachment: ""
     });
     const errors = reactive({ name: false, type: false, date: false, any: false });
 
-    function initAchievements() {
-        achievements.value = createInitialAchievements();
+    async function initAchievements() {
+        if (apiFetch && currentStudentId?.value) {
+            try {
+                const data = await apiFetch(`/api/v1/students/${currentStudentId.value}/achievements`);
+                achievements.value = Array.isArray(data) ? data : [];
+            } catch (e) {
+                console.error("initAchievements error", e);
+                achievements.value = [];
+            }
+        } else {
+            achievements.value = [];
+        }
     }
-    initAchievements();
 
     // ── 按类型过滤 ────────────────────────────────────────────
     const internshipItems = computed(() => achievements.value.filter(a => a.type === "实习"));
@@ -75,18 +87,76 @@ export function useAchievements({ onDataChanged } = {}) {
         showAchieveModal.value = false;
     };
 
-    const saveAchievement = () => {
+    const saveAchievement = async () => {
         errors.any = !achieveForm.name || !achieveForm.type || !achieveForm.date;
         if (errors.any) return;
-        if (editingAchieve.value) Object.assign(editingAchieve.value, achieveForm);
-        else achievements.value.push({ ...achieveForm, id: "a" + Date.now() });
+        if (apiFetch && currentStudentId?.value) {
+            try {
+                const body = JSON.stringify({
+                    name: achieveForm.name, type: achieveForm.type, date: achieveForm.date,
+                    org: achieveForm.org, level: achieveForm.level, description: achieveForm.description,
+                    tags: achieveForm.tags
+                });
+                if (editingAchieve.value?.id) {
+                    const updated = await apiFetch(
+                        `/api/v1/students/${currentStudentId.value}/achievements/${editingAchieve.value.id}`,
+                        { method: "PUT", body }
+                    );
+                    Object.assign(editingAchieve.value, { ...achieveForm, ...updated });
+                } else {
+                    const created = await apiFetch(
+                        `/api/v1/students/${currentStudentId.value}/achievements`,
+                        { method: "POST", body }
+                    );
+                    achievements.value.push({ ...achieveForm, id: created.id });
+                }
+            } catch (e) {
+                console.error("saveAchievement error", e);
+                return;
+            }
+        } else {
+            if (editingAchieve.value) Object.assign(editingAchieve.value, achieveForm);
+            else achievements.value.push({ ...achieveForm, id: "a" + Date.now() });
+        }
         showAchieveModal.value = false;
         onDataChanged?.();
     };
 
+    const deleteError = ref("");
     const deleteAchievement = (id) => {
-        if (confirm("删除？")) {
-            achievements.value = achievements.value.filter(a => a.id !== id);
+        deleteAchieveError.value = "";
+        pendingDeleteAchieveId.value = id;
+        showDeleteAchieveConfirm.value = true;
+    };
+
+    const cancelDeleteAchievement = () => {
+        showDeleteAchieveConfirm.value = false;
+        pendingDeleteAchieveId.value = null;
+        deleteAchieveError.value = "";
+    };
+
+    const confirmDeleteAchievement = async () => {
+        const id = pendingDeleteAchieveId.value;
+        if (apiFetch && currentStudentId?.value) {
+            try {
+                await apiFetch(
+                    `/api/v1/students/${currentStudentId.value}/achievements/${id}`,
+                    { method: "DELETE" }
+                );
+                achievements.value = achievements.value.filter(a => String(a.id) !== String(id));
+                expandedAchieves.value = expandedAchieves.value.filter(eid => String(eid) !== String(id));
+                showDeleteAchieveConfirm.value = false;
+                pendingDeleteAchieveId.value = null;
+                onDataChanged?.();
+            } catch (e) {
+                console.error("deleteAchievement error", e);
+                deleteAchieveError.value = "删除失败，请重试：" + (e.message || e);
+            }
+        } else {
+            achievements.value = achievements.value.filter(a => String(a.id) !== String(id));
+            expandedAchieves.value = expandedAchieves.value.filter(eid => String(eid) !== String(id));
+            showDeleteAchieveConfirm.value = false;
+            pendingDeleteAchieveId.value = null;
             onDataChanged?.();
         }
     };
@@ -110,6 +180,11 @@ export function useAchievements({ onDataChanged } = {}) {
         editAchievement,
         saveAchievement,
         deleteAchievement,
+        cancelDeleteAchievement,
+        confirmDeleteAchievement,
+        showDeleteAchieveConfirm,
+        pendingDeleteAchieveId,
+        deleteAchieveError,
         handleAttachment,
         previewAttachment,
         cancelAchieveModal

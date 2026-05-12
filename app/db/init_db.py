@@ -1,4 +1,5 @@
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 from app.db.session import engine, SessionLocal
 from app.models.base import Base
 # Import all models to ensure they are registered on Base.metadata
@@ -8,6 +9,7 @@ from app.models.course import Course
 from app.models.achievement import Achievement
 from app.models.file import File as FileModel
 from app.models.teacher_student import TeacherStudent
+from app.models.benchmark import Benchmark
 from app.core.security import get_password_hash
 import logging
 
@@ -49,6 +51,22 @@ def init_db():
         logger.exception('IntegrityError during DB init')
     finally:
         db.close()
+
+    # SQLite column migration: add new student columns if not exist
+    new_cols = [
+        ('email', 'VARCHAR'),
+        ('job_target', 'VARCHAR'),
+        ('degree', 'VARCHAR'),
+        ('skill_tags', 'VARCHAR'),
+    ]
+    with engine.connect() as conn:
+        for col, col_type in new_cols:
+            try:
+                conn.execute(text(f'ALTER TABLE students ADD COLUMN {col} {col_type}'))
+                conn.commit()
+                logger.info('Added column students.%s', col)
+            except Exception:
+                pass  # column already exists
 
 
 if __name__ == '__main__':

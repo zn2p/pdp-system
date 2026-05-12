@@ -10,20 +10,33 @@ function createInitialCourses() {
     ];
 }
 
-export function useCourses({ onDataChanged } = {}) {
+export function useCourses({ apiFetch, currentStudentId, onDataChanged } = {}) {
     const courses = ref([]);
     const expandedCourses = ref([]);
     const gradeScale = ref("gpa4");
     const showCourseModal = ref(false);
     const editingCourse = ref(null);
+    const courseFormError = ref("");
+    const showDeleteConfirm = ref(false);
+    const pendingDeleteCourseId = ref(null);
+    const deleteError = ref("");
     const courseForm = reactive({
-        name: "", semester: "", code: "", credit: 3, grade: 85, teacher: "", rank: "", note: ""
+        name: "", semester: "", code: "", credit: null, grade: null, rankMine: "", rankTotal: "", teacher: "", note: ""
     });
 
-    function initCourses() {
-        courses.value = createInitialCourses();
+    async function initCourses() {
+        if (apiFetch && currentStudentId?.value) {
+            try {
+                const data = await apiFetch(`/api/v1/students/${currentStudentId.value}/courses`);
+                courses.value = Array.isArray(data) ? data : [];
+            } catch (e) {
+                console.error("initCourses error", e);
+                courses.value = [];
+            }
+        } else {
+            courses.value = [];
+        }
     }
-    initCourses();
 
     // ── GPA 工具 ──────────────────────────────────────────────
     function gradeToGpa(grade) {
@@ -61,6 +74,27 @@ export function useCourses({ onDataChanged } = {}) {
         courses.value.reduce((best, c) => (!best || Number(c.grade) > Number(best.grade) ? c : best), null)
     );
 
+    // 班级加权百分位：对每门填了排名的课程，用 (mine-0.5)/total 估算百分位，以学分加权求均
+    const classRankDisplay = computed(() => {
+        const ranked = courses.value.filter(c => {
+            const parts = (c.rank || "").split("/");
+            return parts.length === 2 && Number(parts[0]) > 0 && Number(parts[1]) > 0;
+        });
+        if (!ranked.length) return "暂无";
+        let weightedSum = 0, totalW = 0;
+        ranked.forEach(c => {
+            const parts = c.rank.split("/");
+            const mine = Number(parts[0]);
+            const total = Number(parts[1]);
+            const percentile = (mine - 0.5) / total; // 0~1，越小越好
+            const w = Number(c.credit) || 1;
+            weightedSum += percentile * w;
+            totalW += w;
+        });
+        const pct = Math.round((weightedSum / totalW) * 100);
+        return `Top ${pct}%`;
+    });
+
     const leftTitle = computed(() => gradeScale.value === "gpa4" ? "总学期平均绩点" : "总学期平均成绩");
     const rightTitle = computed(() => "本学期GPA");
     const leftValue = computed(() => gradeScale.value === "gpa4" ? computedStats.value.totalGpa : computedStats.value.avgScore);
@@ -87,27 +121,109 @@ export function useCourses({ onDataChanged } = {}) {
 
     const openAddCourseModal = () => {
         editingCourse.value = null;
-        Object.assign(courseForm, { name: "", semester: "", code: "", credit: 3, grade: 85, teacher: "", rank: "", note: "" });
+        courseFormError.value = "";
+        Object.assign(courseForm, { name: "", semester: "", code: "", credit: null, grade: null, rankMine: "", rankTotal: "", teacher: "", note: "" });
         showCourseModal.value = true;
     };
 
     const editCourse = (course) => {
         editingCourse.value = course;
-        Object.assign(courseForm, course);
+        courseFormError.value = "";
+        const parts = (course.rank || "").split("/");
+        Object.assign(courseForm, {
+            ...course,
+            rankMine: parts[0] || "",
+            rankTotal: parts[1] || ""
+        });
         showCourseModal.value = true;
     };
 
-    const saveCourse = () => {
-        if (!courseForm.name || !courseForm.semester || courseForm.credit == null || courseForm.grade == null) return;
-        if (editingCourse.value) Object.assign(editingCourse.value, courseForm);
-        else courses.value.unshift({ ...courseForm, id: "c" + Date.now() });
+    const saveCourse = async () => {
+        const missing = [];
+        if (!courseForm.name) missing.push("课程名称");
+        if (!courseForm.semester) missing.push("学期");
+        if (courseForm.credit == null || courseForm.credit === "") missing.push("学分");
+        if (courseForm.grade == null || courseForm.grade === "") missing.push("成绩");
+        if (missing.length) { courseFormError.value = `请填写必填项：${missing.join("、")}`; return; }
+        courseFormError.value = "";
+        if (apiFetch && currentStudentId?.value) {
+            try {
+                const rank = courseForm.rankMine && courseForm.rankTotal
+                    ? `${courseForm.rankMine}/${courseForm.rankTotal}`
+                    : (courseForm.rankMine || "");
+                const body = JSON.stringify({
+                    name: courseForm.name, semester: courseForm.semester, code: courseForm.code,
+                    credit: Number(courseForm.credit), grade: Number(courseForm.grade),
+                    teacher: courseForm.teacher, rank, note: courseForm.note
+                });
+                if (editingCourse.value?.id) {
+                    const updated = await apiFetch(
+                        `/api/v1/students/${currentStudentId.value}/courses/${editingCourse.value.id}`,
+                        { method: "PUT", body }
+                    );
+                    // 用表单数据先覆盖，再用后端返回值覆盖（确保 teacher/code/note 等字段同步）
+                    const idx = courses.value.findIndex(c => c.id === editingCourse.value.id);
+                    if (idx !== -1) {
+                        courses.value[idx] = { ...courses.value[idx], ...courseForm, ...updated };
+                    }
+                } else {
+                    const created = await apiFetch(
+                        `/api/v1/students/${currentStudentId.value}/courses`,
+                        { method: "POST", body }
+                    );
+                    courses.value.unshift({ ...courseForm, ...created });
+                }
+            } catch (e) {
+                console.error("saveCourse error", e);
+                courseFormError.value = "保存失败，请检查网络或重试：" + (e.message || e);
+                return;
+            }
+        } else {
+            if (editingCourse.value) {
+                const idx = courses.value.findIndex(c => c.id === editingCourse.value.id);
+                if (idx !== -1) courses.value[idx] = { ...courses.value[idx], ...courseForm };
+            } else {
+                courses.value.unshift({ ...courseForm, id: "c" + Date.now() });
+            }
+        }
         showCourseModal.value = false;
         onDataChanged?.();
     };
 
     const deleteCourse = (id) => {
-        if (confirm("删除？")) {
-            courses.value = courses.value.filter(c => c.id !== id);
+        deleteError.value = "";
+        pendingDeleteCourseId.value = id;
+        showDeleteConfirm.value = true;
+    };
+
+    const cancelDeleteCourse = () => {
+        showDeleteConfirm.value = false;
+        pendingDeleteCourseId.value = null;
+        deleteError.value = "";
+    };
+
+    const confirmDeleteCourse = async () => {
+        const id = pendingDeleteCourseId.value;
+        if (apiFetch && currentStudentId?.value) {
+            try {
+                await apiFetch(
+                    `/api/v1/students/${currentStudentId.value}/courses/${id}`,
+                    { method: "DELETE" }
+                );
+                courses.value = courses.value.filter(c => String(c.id) !== String(id));
+                showDeleteConfirm.value = false;
+                pendingDeleteCourseId.value = null;
+                expandedCourses.value = expandedCourses.value.filter(eid => String(eid) !== String(id));
+                onDataChanged?.();
+            } catch (e) {
+                console.error("deleteCourse error", e);
+                deleteError.value = "删除失败，请重试：" + (e.message || e);
+            }
+        } else {
+            courses.value = courses.value.filter(c => String(c.id) !== String(id));
+            expandedCourses.value = expandedCourses.value.filter(eid => String(eid) !== String(id));
+            showDeleteConfirm.value = false;
+            pendingDeleteCourseId.value = null;
             onDataChanged?.();
         }
     };
@@ -119,6 +235,10 @@ export function useCourses({ onDataChanged } = {}) {
         showCourseModal,
         editingCourse,
         courseForm,
+        courseFormError,
+        showDeleteConfirm,
+        pendingDeleteCourseId,
+        deleteError,
         initCourses,
         gradeToGpa,
         getGpaPoint,
@@ -132,12 +252,15 @@ export function useCourses({ onDataChanged } = {}) {
         rightValue,
         gpaDisplayValue,
         gpaDisplayLabel,
+        classRankDisplay,
         courseOverviewStats,
         toggleCourseDetail,
         updateScale,
         openAddCourseModal,
         editCourse,
         saveCourse,
-        deleteCourse
+        deleteCourse,
+        cancelDeleteCourse,
+        confirmDeleteCourse
     };
 }

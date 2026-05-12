@@ -14,5 +14,9 @@ class Student(Base):
     grad_year = Column(String, nullable=True)
     phone = Column(String, nullable=True)
     photo_path = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    job_target = Column(String, nullable=True)
+    degree = Column(String, nullable=True)
+    skill_tags = Column(String, nullable=True)
 
     user = relationship("User")
