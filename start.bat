@@ -34,7 +34,7 @@ echo    Frontend: 127.0.0.1:5500
 
 echo.
 echo Starting backend...
-start "PDP Backend" "%UVICORN%" app.main:app --host 127.0.0.1 --port 8001
+start "PDP Backend" "%UVICORN%" app.main:app --host 127.0.0.1 --port 8001 --reload
 
 echo Starting frontend...
 start "PDP Frontend" "%PY%" D:\github\pdp-system\frontend\serve.py

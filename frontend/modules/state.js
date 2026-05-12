@@ -27,20 +27,28 @@ export function useAppState() {
     // ── 当前页面（跨模块共享）────────────────────────────────
     const currentPage = ref("home");
 
+    // ── 当前学生数据库 ID（登录后赋值）────────────────────────
+    const currentStudentId = ref(null);
+
     // ── 课程 ─────────────────────────────────────────────────
     const coursesModule = useCourses({
+        apiFetch,
+        currentStudentId,
         onDataChanged: () => updateCharts()
     });
     const {
-        courses, expandedCourses, gradeScale, showCourseModal, editingCourse, courseForm,
+        courses, expandedCourses, gradeScale, showCourseModal, editingCourse, courseForm, courseFormError,
+        showDeleteConfirm, pendingDeleteCourseId, deleteError,
         initCourses, getGpaPoint, computedStats, computedGPA, totalCredits, highestCourse,
-        leftTitle, rightTitle, leftValue, rightValue, gpaDisplayValue, gpaDisplayLabel,
+        leftTitle, rightTitle, leftValue, rightValue, gpaDisplayValue, gpaDisplayLabel, classRankDisplay,
         courseOverviewStats, toggleCourseDetail, updateScale, openAddCourseModal,
-        editCourse, saveCourse, deleteCourse
+        editCourse, saveCourse, deleteCourse, cancelDeleteCourse, confirmDeleteCourse
     } = coursesModule;
 
     // ── 成就 ─────────────────────────────────────────────────
     const achievementsModule = useAchievements({
+        apiFetch,
+        currentStudentId,
         onDataChanged: () => updateCharts()
     });
     const {
@@ -48,25 +56,29 @@ export function useAppState() {
         initAchievements, internshipItems, projectItems, awardItems, certItems, sortedAchievements,
         achievementOverviewStats, toggleAchieveDetail, openAddAchievementModal,
         editAchievement, saveAchievement, deleteAchievement, handleAttachment,
+        cancelDeleteAchievement, confirmDeleteAchievement,
+        showDeleteAchieveConfirm, pendingDeleteAchieveId, deleteAchieveError,
         previewAttachment, cancelAchieveModal
     } = achievementsModule;
 
     // ── 简历 ─────────────────────────────────────────────────
-    const resumeModule = useResume({ projectItems, internshipItems, awardItems, certItems });
+    const resumeModule = useResume({ apiFetch, currentStudentId, projectItems, internshipItems, awardItems, certItems });
     const {
         showBasicModal, showPreviewModal, resumeTemplate, basicInfo, skillTags,
+        skillTagInput, basicInfoSaving, basicInfoError,
         missingFields, filledProfileFields, profileCompletionRate, exportFileName,
-        resumeChecklist, resumeOverviewStats, openBasicInfoModal, saveBasicInfo,
+        resumeChecklist, resumeOverviewStats, loadProfile,
+        openBasicInfoModal, saveBasicInfo, addSkillTag, removeSkillTag,
         handlePhoto, previewFullResume, exportResume
     } = resumeModule;
 
     // ── 对比（学生）──────────────────────────────────────────
-    const compareModule = useCompare({ computedGPA });
+    const compareModule = useCompare({ computedGPA, apiFetch, currentStudentId, courses, achievements });
     const {
-        comparisonResult, compareGroup, compareDims, timeRange, granularity,
-        benchmarkFile, benchmarkGroup, benchmarkTimeRange, importStatus,
-        comparisonMessage, comparisonError, dimResults, compareOverviewStats,
-        getDimName, getDimResult, handleBenchmarkFile, importBenchmark
+        comparisonResult, compareRunning, compareGroup, compareDims, timeRange, granularity,
+        benchmarkFile, benchmarkGroup, benchmarkTimeRange, importStatus, importRunning,
+        comparisonMessage, comparisonError, dimResults, dimResultsData, availableSemesters,
+        compareOverviewStats, getDimName, getDimResult, handleBenchmarkFile, importBenchmark
     } = compareModule;
 
     const runComparison = () => compareModule.runComparison({ onComplete: () => updateCharts() });
@@ -77,9 +89,12 @@ export function useAppState() {
         teacherStudents, selectedStudentId, selectedStudent, showAddStudentModal,
         newStudent, availableStudents, selectedPickStudentId, studentPickerQuery,
         filteredAvailableStudents, addStudentError, teacherComparisonResult,
-        teacherComparisonMessage, teacherComparisonError, teacherHomeCards,
-        teacherStudentStats, teacherCompareStats, initTeacher,
-        openAddStudentModal, addNewStudent
+        teacherComparisonMessage, teacherComparisonError,
+        teacherDimResults, teacherDimResultsData, teacherCompareRunning,
+        teacherCompareGroup, teacherTimeRange, teacherSemesters,
+        showRemoveConfirmId,
+        teacherHomeCards, teacherStudentStats, teacherCompareStats, initTeacher,
+        openAddStudentModal, addNewStudent, removeStudent, loadTeacherStudentSemesters
     } = teacherModule;
 
     const runTeacherComparison = () => teacherModule.runTeacherComparison({ onComplete: () => updateCharts() });
@@ -91,7 +106,10 @@ export function useAppState() {
         computedGPA,
         comparisonResult,
         teacherComparisonResult,
-        selectedStudent
+        selectedStudent,
+        compareDims,
+        dimResultsData,
+        teacherDimResultsData,
     });
 
     // ── 菜单 / 页面元信息（跨模块 computed）──────────────────
@@ -140,26 +158,21 @@ export function useAppState() {
                         ? students.find(s => s.student_id === loginForm.username) || students[0]
                         : null;
                     if (target) {
+                        currentStudentId.value = target.id;
                         const profile = await apiFetch(`/api/v1/students/${target.id}`);
                         courses.value = profile.courses || [];
                         achievements.value = profile.achievements || [];
-                        basicInfo.name = profile.name || basicInfo.name;
-                        basicInfo.school = profile.school || basicInfo.school;
-                        basicInfo.major = profile.major || basicInfo.major;
+                        loadProfile(profile);
                     }
                 } catch (e) {
                     console.error("fetchStudentProfile error", e);
                 }
             } else if (result.role === "staff") {
                 try {
-                    const myStudents = await apiFetch("/api/v1/teachers/my-students");
-                    teacherStudents.value = myStudents.map(s => ({
-                        id: s.id, name: s.name, studentId: s.student_id,
-                        basic: { school: s.school, major: s.major },
-                        gpa: "3.0", coreCourses: "", internship: "", project: "", awards: ""
-                    }));
+                    initTeacher();
+                    await teacherModule.loadMyStudents();
                 } catch (e) {
-                    console.warn("Failed to fetch teacher students", e);
+                    console.warn("Failed to load teacher students", e);
                 }
             }
 
@@ -174,11 +187,12 @@ export function useAppState() {
 
     function logout() {
         clearAuthState();
+        currentStudentId.value = null;
         currentPage.value = "home";
         initCourses();
         initAchievements();
-        initTeacher();
-    }
+        loadProfile({});
+        initTeacher();    }
 
     // ── 响应式联动 ────────────────────────────────────────────
     watch(
@@ -198,26 +212,30 @@ export function useAppState() {
         // 导航
         currentPage, menuItems, pageTitle, roleDisplayName, activeModule, loginHighlights,
         // 课程
-        courses, expandedCourses, gradeScale, showCourseModal, editingCourse, courseForm,
+        courses, expandedCourses, gradeScale, showCourseModal, editingCourse, courseForm, courseFormError,
+        showDeleteConfirm, pendingDeleteCourseId, deleteError,
         getGpaPoint, computedGPA, totalCredits,
-        leftTitle, rightTitle, leftValue, rightValue, gpaDisplayValue, gpaDisplayLabel,
+        leftTitle, rightTitle, leftValue, rightValue, gpaDisplayValue, gpaDisplayLabel, classRankDisplay,
         courseOverviewStats, toggleCourseDetail, updateScale,
-        openAddCourseModal, editCourse, saveCourse, deleteCourse,
+        openAddCourseModal, editCourse, saveCourse, deleteCourse, cancelDeleteCourse, confirmDeleteCourse,
         // 成就
         achievements, expandedAchieves, showAchieveModal, editingAchieve, achieveForm, errors,
         internshipItems, projectItems, awardItems, certItems, sortedAchievements,
         achievementOverviewStats, toggleAchieveDetail,
         openAddAchievementModal, editAchievement, saveAchievement, deleteAchievement,
         handleAttachment, previewAttachment, cancelAchieveModal,
+        cancelDeleteAchievement, confirmDeleteAchievement,
+        showDeleteAchieveConfirm, deleteAchieveError,
         // 简历
         showBasicModal, showPreviewModal, resumeTemplate, basicInfo, skillTags,
+        skillTagInput, basicInfoSaving, basicInfoError,
         missingFields, profileCompletionRate, exportFileName,
         resumeChecklist, resumeOverviewStats,
-        openBasicInfoModal, saveBasicInfo, handlePhoto, previewFullResume, exportResume,
+        openBasicInfoModal, saveBasicInfo, addSkillTag, removeSkillTag, handlePhoto, previewFullResume, exportResume,
         // 对比（学生）
-        comparisonResult, compareGroup, compareDims, timeRange, granularity,
-        benchmarkFile, benchmarkGroup, benchmarkTimeRange, importStatus,
-        comparisonMessage, comparisonError, dimResults, compareOverviewStats,
+        comparisonResult, compareRunning, compareGroup, compareDims, timeRange, granularity,
+        benchmarkFile, benchmarkGroup, benchmarkTimeRange, importStatus, importRunning,
+        comparisonMessage, comparisonError, dimResults, dimResultsData, availableSemesters, compareOverviewStats,
         getDimName, getDimResult, handleBenchmarkFile, importBenchmark, runComparison,
         // 首页卡片
         studentHomeCards,
@@ -226,7 +244,10 @@ export function useAppState() {
         newStudent, availableStudents, selectedPickStudentId, studentPickerQuery,
         filteredAvailableStudents, addStudentError,
         teacherComparisonResult, teacherComparisonMessage, teacherComparisonError,
+        teacherDimResults, teacherDimResultsData, teacherCompareRunning,
+        teacherCompareGroup, teacherTimeRange, teacherSemesters,
+        showRemoveConfirmId,
         teacherHomeCards, teacherStudentStats, teacherCompareStats,
-        openAddStudentModal, addNewStudent, runTeacherComparison
+        openAddStudentModal, addNewStudent, removeStudent, loadTeacherStudentSemesters, runTeacherComparison
     };
 }

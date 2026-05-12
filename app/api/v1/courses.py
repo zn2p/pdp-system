@@ -27,3 +27,25 @@ def create_course(student_id: int, payload: CourseCreate, db: Session = Depends(
     db.commit()
     db.refresh(course)
     return course
+
+
+@router.put("/{course_id}", response_model=CourseOut)
+def update_course(student_id: int, course_id: int, payload: CourseCreate, db: Session = Depends(get_db)):
+    course = db.query(Course).filter(Course.id == course_id, Course.student_id == student_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="course not found")
+    for field, value in payload.dict(exclude_unset=True).items():
+        setattr(course, field, value)
+    db.commit()
+    db.refresh(course)
+    return course
+
+
+@router.delete("/{course_id}")
+def delete_course(student_id: int, course_id: int, db: Session = Depends(get_db)):
+    course = db.query(Course).filter(Course.id == course_id, Course.student_id == student_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="course not found")
+    db.delete(course)
+    db.commit()
+    return {"ok": True}

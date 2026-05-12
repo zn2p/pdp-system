@@ -1,23 +1,56 @@
 // 教师模块 —— 由负责模块4/5（教师视图与教师对比分析）的成员维护
 // 负责：学生清单管理、学生选择、教师视角对比分析
 
-const { ref, reactive, computed } = window.Vue;
+const { ref, reactive, computed, watch } = window.Vue;
 
-function createInitialTeacherStudents() {
-    return [
-        {
-            id: "s1", name: "王语涵", studentId: "2024001",
-            basic: { jobTarget: "Java开发", school: "杭州电子科技大学", major: "计算机科学与技术" },
-            gpa: "3.65", coreCourses: "数据结构, 数据库", internship: "阿里巴巴实习",
-            project: "智能推荐系统", awards: "算法大赛二等奖"
-        },
-        {
-            id: "s2", name: "李思睿", studentId: "2024002",
-            basic: { jobTarget: "前端开发", school: "某某大学", major: "软件工程" },
-            gpa: "3.82", coreCourses: "Web开发, 操作系统", internship: "腾讯前端",
-            project: "电商后台", awards: "数学建模省一"
-        }
-    ];
+// ── GPA 计算工具（与 useCourses 保持一致）──────────────────
+function gradeToGpa(grade) {
+    if (grade >= 90) return 4.0;
+    if (grade >= 85) return 3.7;
+    if (grade >= 82) return 3.3;
+    if (grade >= 78) return 3.0;
+    if (grade >= 75) return 2.7;
+    if (grade >= 72) return 2.3;
+    if (grade >= 68) return 2.0;
+    return 1.0;
+}
+
+function calcStudentGpa(courses) {
+    if (!courses || !courses.length) return null;
+    let totalPoint = 0, totalCredit = 0;
+    courses.forEach(c => {
+        const g = Number(c.grade);
+        if (!g) return;
+        const credit = Number(c.credit) || 1;
+        totalPoint += gradeToGpa(g) * credit;
+        totalCredit += credit;
+    });
+    return totalCredit ? (totalPoint / totalCredit).toFixed(2) : null;
+}
+
+function buildStudentCard(s, profile) {
+    const gpa = calcStudentGpa(profile.courses);
+    const courses = profile.courses || [];
+    const topCourses = [...courses]
+        .sort((a, b) => Number(b.grade) - Number(a.grade))
+        .slice(0, 3).map(c => c.name).join("、");
+    const achievements = profile.achievements || [];
+    const internship = achievements.filter(a => a.type === "internship").map(a => a.name).join("；");
+    const project = achievements.filter(a => a.type === "project").map(a => a.name).join("；");
+    const awards = achievements.filter(a => a.type === "award" || a.type === "competition").map(a => a.name).join("；");
+    const certs = achievements.filter(a => a.type === "cert").map(a => a.name).join("；");
+    return {
+        id: s.id,
+        name: profile.name || s.name || s.student_id,
+        studentId: profile.student_id || s.student_id,
+        basic: { school: profile.school || s.school, major: profile.major || s.major, jobTarget: profile.job_target },
+        gpa: gpa || "—",
+        coreCourses: topCourses,
+        internship,
+        project,
+        awards,
+        certs,
+    };
 }
 
 /**
@@ -30,7 +63,7 @@ function createInitialTeacherStudents() {
  */
 export function useTeacher({ apiFetch, showToast, compareDims, dimResults }) {
     const teacherStudents = ref([]);
-    const selectedStudentId = ref("s1");
+    const selectedStudentId = ref(null);
     const showAddStudentModal = ref(false);
     const newStudent = reactive({ name: "", studentId: "" });
     const availableStudents = ref([]);
@@ -40,11 +73,26 @@ export function useTeacher({ apiFetch, showToast, compareDims, dimResults }) {
     const teacherComparisonResult = ref(false);
     const teacherComparisonMessage = ref("");
     const teacherComparisonError = ref("");
+    const teacherDimResults = reactive({});
+    const teacherDimResultsData = reactive({});
+    const teacherCompareRunning = ref(false);
+    const teacherCompareGroup = ref("同专业");
+    const teacherTimeRange = ref("全部");
+    const teacherSemesters = ref(["全部"]);
+    const showRemoveConfirmId = ref(null);
 
     function initTeacher() {
-        teacherStudents.value = createInitialTeacherStudents();
+        teacherStudents.value = [];
+        selectedStudentId.value = null;
+        teacherComparisonResult.value = false;
+        teacherComparisonMessage.value = "";
+        teacherComparisonError.value = "";
+        teacherTimeRange.value = "全部";
+        teacherSemesters.value = ["全部"];
+        showRemoveConfirmId.value = null;
+        Object.keys(teacherDimResults).forEach(k => delete teacherDimResults[k]);
+        Object.keys(teacherDimResultsData).forEach(k => delete teacherDimResultsData[k]);
     }
-    initTeacher();
 
     // ── Computed ──────────────────────────────────────────────
     const selectedStudent = computed(() =>
@@ -80,11 +128,52 @@ export function useTeacher({ apiFetch, showToast, compareDims, dimResults }) {
     const teacherCompareStats = computed(() => [
         { label: "已选学生", value: selectedStudent.value?.name || "未选择", desc: "当前对比分析对象。" },
         { label: "对比维度", value: `${compareDims.value.length} 项`, desc: "教师视图下统一查看分析口径。" },
-        { label: "基准文件", value: "未上传", desc: "支持导入统一群体基准。" },
+        { label: "基准文件", value: "通用基准", desc: "与学生模块共用基准数据库。" },
         { label: "分析状态", value: teacherComparisonResult.value ? "已生成" : "待执行", desc: "当前是否已有教师分析结论。" }
     ]);
 
+    // ── 加载所选学生的课程学期列表 ─────────────────────────────
+    const loadTeacherStudentSemesters = async (studentDbId) => {
+        if (!studentDbId) { teacherSemesters.value = ["全部"]; return; }
+        try {
+            const profile = await apiFetch(`/api/v1/students/${studentDbId}`);
+            const sems = new Set();
+            (profile.courses || []).forEach(c => { if (c.semester) sems.add(c.semester); });
+            teacherSemesters.value = ["全部", ...Array.from(sems).sort()];
+        } catch (e) {
+            teacherSemesters.value = ["全部"];
+        }
+    };
+
+    // Auto-reload semesters when selected student changes
+    watch(selectedStudentId, (newId) => {
+        teacherTimeRange.value = "全部";
+        teacherComparisonResult.value = false;
+        Object.keys(teacherDimResults).forEach(k => delete teacherDimResults[k]);
+        Object.keys(teacherDimResultsData).forEach(k => delete teacherDimResultsData[k]);
+        loadTeacherStudentSemesters(newId);
+    });
+
     // ── 操作函数 ──────────────────────────────────────────────
+    // ── 加载完整学生清单（含档案详情）──────────────────────────
+    const loadMyStudents = async () => {
+        teacherStudents.value = [];
+        selectedStudentId.value = null;
+        showRemoveConfirmId.value = null;
+        try {
+            const list = await apiFetch("/api/v1/teachers/my-students");
+            const profiles = await Promise.all(
+                list.map(s => apiFetch(`/api/v1/students/${s.id}`).catch(() => ({})))
+            );
+            teacherStudents.value = list.map((s, i) => buildStudentCard(s, profiles[i]));
+            if (!selectedStudentId.value && list.length) selectedStudentId.value = list[0].id;
+        } catch (e) {
+            teacherStudents.value = [];
+            selectedStudentId.value = null;
+            console.warn("loadMyStudents error", e);
+        }
+    };
+
     const openAddStudentModal = async () => {
         selectedPickStudentId.value = null;
         studentPickerQuery.value = "";
@@ -105,17 +194,8 @@ export function useTeacher({ apiFetch, showToast, compareDims, dimResults }) {
                 method: "POST",
                 body: JSON.stringify({ student_record_id: selectedPickStudentId.value })
             });
-            teacherStudents.value.push({
-                id: s.id,
-                name: s.name,
-                studentId: s.student_id,
-                basic: { school: s.school, major: s.major },
-                gpa: "3.0",
-                coreCourses: "",
-                internship: "",
-                project: "",
-                awards: ""
-            });
+            const profile = await apiFetch(`/api/v1/students/${s.id}`);
+            teacherStudents.value.push(buildStudentCard(s, profile));
             showAddStudentModal.value = false;
             showToast(`已将 ${s.name} 添加到学生清单`);
         } catch (e) {
@@ -124,11 +204,73 @@ export function useTeacher({ apiFetch, showToast, compareDims, dimResults }) {
         }
     };
 
-    const runTeacherComparison = ({ onComplete } = {}) => {
-        teacherComparisonResult.value = true;
-        teacherComparisonMessage.value = `${selectedStudent.value?.name} 的GPA处于前25%`;
-        dimResults.gpa = `个人 ${selectedStudent.value?.gpa || "3.50"}，群体均值 3.32`;
-        onComplete?.();
+    const removeStudent = async (studentId) => {
+        try {
+            await apiFetch(`/api/v1/teachers/my-students/${studentId}`, { method: "DELETE" });
+            teacherStudents.value = teacherStudents.value.filter(s => s.id !== studentId);
+            if (selectedStudentId.value === studentId)
+                selectedStudentId.value = teacherStudents.value[0]?.id ?? null;
+            showRemoveConfirmId.value = null;
+            showToast("已移除学生");
+        } catch (e) {
+            if ((e.message || "").includes("404")) {
+                teacherStudents.value = teacherStudents.value.filter(s => s.id !== studentId);
+                if (selectedStudentId.value === studentId)
+                    selectedStudentId.value = teacherStudents.value[0]?.id ?? null;
+                showRemoveConfirmId.value = null;
+                showToast("该学生已不在清单中，已同步列表");
+                return;
+            }
+            showRemoveConfirmId.value = null;
+            showToast("移除失败：" + (e.message || e), "error");
+        }
+    };
+
+    const runTeacherComparison = async ({ onComplete } = {}) => {
+        const student = selectedStudent.value;
+        if (!student?.id) {
+            teacherComparisonError.value = "请先选择学生";
+            return;
+        }
+        teacherCompareRunning.value = true;
+        teacherComparisonError.value = "";
+        try {
+            const res = await apiFetch("/api/v1/compare/run", {
+                method: "POST",
+                body: JSON.stringify({
+                    student_id: student.id,
+                    group: teacherCompareGroup.value,
+                    time_range: teacherTimeRange.value,
+                    dims: compareDims?.value || ["gpa"],
+                }),
+            });
+            teacherComparisonMessage.value = res.message;
+            Object.entries(res.dims).forEach(([dim, d]) => {
+                const bm = d.benchmark;
+                const personal = d.personal;
+                const hasData = bm !== null && bm !== undefined;
+                const unit = d.unit || "";
+                let text;
+                if (!hasData) {
+                    text = `个人：${personal}${unit}（暂无群体基准数据）`;
+                } else if (personal > bm) {
+                    text = `个人 ${personal}${unit}，群体均值 ${bm}${unit}，高于均值 ${(personal - bm).toFixed(2)}${unit}`;
+                } else if (personal < bm) {
+                    text = `个人 ${personal}${unit}，群体均值 ${bm}${unit}，低于均值 ${(bm - personal).toFixed(2)}${unit}`;
+                } else {
+                    text = `个人 ${personal}${unit}，与群体均值持平（${bm}${unit}）`;
+                }
+                if (dimResults) dimResults[dim] = text;
+                teacherDimResults[dim] = text;
+                teacherDimResultsData[dim] = { personal, benchmark: hasData ? bm : 0, label: d.label, unit };
+            });
+            teacherComparisonResult.value = true;
+            onComplete?.();
+        } catch (e) {
+            teacherComparisonError.value = e.message || "对比分析失败，请稍后重试";
+        } finally {
+            teacherCompareRunning.value = false;
+        }
     };
 
     return {
@@ -145,12 +287,22 @@ export function useTeacher({ apiFetch, showToast, compareDims, dimResults }) {
         teacherComparisonResult,
         teacherComparisonMessage,
         teacherComparisonError,
+        teacherDimResults,
+        teacherDimResultsData,
+        teacherCompareRunning,
+        teacherCompareGroup,
+        teacherTimeRange,
+        teacherSemesters,
         teacherHomeCards,
         teacherStudentStats,
         teacherCompareStats,
         initTeacher,
+        loadMyStudents,
         openAddStudentModal,
         addNewStudent,
-        runTeacherComparison
+        removeStudent,
+        showRemoveConfirmId,
+        loadTeacherStudentSemesters,
+        runTeacherComparison,
     };
 }

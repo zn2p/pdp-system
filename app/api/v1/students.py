@@ -48,9 +48,32 @@ def get_student(student_id: int, db: Session = Depends(get_db)):
     return {
         "id": s.id,
         "student_id": s.student_id,
+        "name": s.user.display_name if s.user else None,
         "school": s.school,
         "major": s.major,
+        "grad_year": s.grad_year,
         "phone": s.phone,
-        "courses": [ {"id": c.id, "name": c.name, "credit": c.credit, "grade": c.grade, "semester": c.semester} for c in s.courses ],
-        "achievements": [ {"id": a.id, "name": a.name, "type": a.type, "date": a.date} for a in s.achievements ]
+        "email": s.email or (s.user.email if s.user else None),
+        "job_target": s.job_target,
+        "degree": s.degree,
+        "skill_tags": s.skill_tags,
+        "photo_path": s.photo_path,
+        "courses": [{"id": c.id, "name": c.name, "credit": c.credit, "grade": c.grade, "semester": c.semester, "code": c.code, "teacher": c.teacher, "rank": c.rank, "note": c.note} for c in s.courses],
+        "achievements": [{"id": a.id, "name": a.name, "type": a.type, "date": a.date, "org": a.org, "level": a.level, "description": a.description, "tags": a.tags} for a in s.achievements],
     }
+
+
+@router.put("/{student_id}/profile", response_model=dict)
+def update_profile(student_id: int, payload: dict, db: Session = Depends(get_db)):
+    s = db.query(Student).filter(Student.id == student_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail="student not found")
+    allowed = {"school", "major", "grad_year", "phone", "email", "job_target", "degree", "skill_tags", "photo_path"}
+    for key, val in payload.items():
+        if key in allowed:
+            setattr(s, key, val)
+    # update display name if provided
+    if "name" in payload and payload["name"] and s.user:
+        s.user.display_name = payload["name"]
+    db.commit()
+    return {"ok": True}

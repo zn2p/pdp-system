@@ -22,7 +22,14 @@ export function createApiFetch(tokenRef) {
             const text = await res.text();
             throw new Error(`${res.status} ${res.statusText}: ${text}`);
         }
+        if (res.status === 204 || res.status === 205) {
+            return null;
+        }
         const ct = res.headers.get("content-type") || "";
-        return ct.includes("application/json") ? res.json() : res.text();
+        const text = await res.text();
+        if (!text) {
+            return null;
+        }
+        return ct.includes("application/json") ? JSON.parse(text) : text;
     };
 }
