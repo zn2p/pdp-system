@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 
 
@@ -35,6 +35,20 @@ class CourseCreate(BaseModel):
     teacher: Optional[str]
     rank: Optional[str]
     note: Optional[str]
+
+    @validator("credit")
+    def validate_credit(cls, v):
+        if v is not None and v <= 0:
+            raise ValueError("学分必须大于 0")
+        return v
+
+    @validator("grade")
+    def validate_grade(cls, v):
+        if v is not None and v <= 0:
+            raise ValueError("成绩必须大于0")
+        if v is not None and v > 100:
+            raise ValueError("成绩不能超过100")
+        return v
 
 
 class CourseOut(BaseModel):

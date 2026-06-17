@@ -7,9 +7,10 @@ import sys
 import os
 import time
 
-os.chdir(r'D:\github\pdp-system')
+REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+os.chdir(REPO_ROOT)
 
-VENV_PATH = r'D:\github\pdp-system\.venv311'
+VENV_PATH = os.path.join(REPO_ROOT, '.venv311')
 PYTHON_EXE = os.path.join(VENV_PATH, 'Scripts', 'python.exe')
 PYTEST_EXE = os.path.join(VENV_PATH, 'Scripts', 'pytest.exe')
 UVICORN_EXE = os.path.join(VENV_PATH, 'Scripts', 'uvicorn.exe')
@@ -59,7 +60,7 @@ print(f"Backend server started (PID: {backend_process.pid})")
 print("\n" + "="*50)
 print("STEP 4: STARTING FRONTEND STATIC SERVER (Port 5500)")
 print("="*50)
-frontend_dir = r'D:\github\pdp-system\frontend'
+frontend_dir = os.path.join(REPO_ROOT, 'frontend')
 frontend_cmd = f'"{PYTHON_EXE}" -m http.server 5500 --bind 127.0.0.1 --directory "{frontend_dir}"'
 print(f"Command: {frontend_cmd}")
 frontend_process = subprocess.Popen(frontend_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, cwd=frontend_dir)

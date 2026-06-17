@@ -145,6 +145,11 @@ export function useCourses({ apiFetch, currentStudentId, onDataChanged } = {}) {
         if (courseForm.credit == null || courseForm.credit === "") missing.push("学分");
         if (courseForm.grade == null || courseForm.grade === "") missing.push("成绩");
         if (missing.length) { courseFormError.value = `请填写必填项：${missing.join("、")}`; return; }
+        const credit = Number(courseForm.credit);
+        const grade = Number(courseForm.grade);
+        if (!Number.isFinite(credit) || credit <= 0) { courseFormError.value = "学分必须是大于 0 的数字"; return; }
+        if (!Number.isFinite(grade) || grade <= 0) { courseFormError.value = "成绩必须大于0"; return; }
+        if (grade > 100) { courseFormError.value = "成绩不能超过100"; return; }
         courseFormError.value = "";
         if (apiFetch && currentStudentId?.value) {
             try {
@@ -153,7 +158,7 @@ export function useCourses({ apiFetch, currentStudentId, onDataChanged } = {}) {
                     : (courseForm.rankMine || "");
                 const body = JSON.stringify({
                     name: courseForm.name, semester: courseForm.semester, code: courseForm.code,
-                    credit: Number(courseForm.credit), grade: Number(courseForm.grade),
+                    credit, grade,
                     teacher: courseForm.teacher, rank, note: courseForm.note
                 });
                 if (editingCourse.value?.id) {
@@ -175,7 +180,14 @@ export function useCourses({ apiFetch, currentStudentId, onDataChanged } = {}) {
                 }
             } catch (e) {
                 console.error("saveCourse error", e);
-                courseFormError.value = "保存失败，请检查网络或重试：" + (e.message || e);
+                const message = e.message || String(e);
+                if (message.includes("grade") || message.includes("成绩")) {
+                    courseFormError.value = grade <= 0 ? "成绩必须大于0" : "成绩不能超过100";
+                } else if (message.includes("credit") || message.includes("学分")) {
+                    courseFormError.value = "学分必须是大于 0 的数字";
+                } else {
+                    courseFormError.value = "保存失败，请检查网络或重试";
+                }
                 return;
             }
         } else {

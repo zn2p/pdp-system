@@ -1,6 +1,7 @@
 @echo off
 REM Setup and run pdp-system
-cd /d D:\github\pdp-system
+set ROOT=%~dp0
+cd /d "%ROOT%"
 
 echo.
 echo ============================================
@@ -19,14 +20,14 @@ echo ============================================
 echo 3. STARTING BACKEND SERVER (Port 8001)
 echo ============================================
 REM Start backend in new window
-start "Backend Server" cmd /k "cd /d D:\github\pdp-system && .venv311\Scripts\uvicorn.exe app.main:app --host 127.0.0.1 --port 8001"
+start "Backend Server" /D "%ROOT%" cmd /k ".venv311\Scripts\uvicorn.exe app.main:app --host 127.0.0.1 --port 8001"
 
 echo.
 echo ============================================
 echo 4. STARTING FRONTEND STATIC SERVER (Port 5500)
 echo ============================================
 REM Start frontend in new window
-start "Frontend Server" cmd /k "cd /d D:\github\pdp-system\frontend && python -m http.server 5500 --bind 127.0.0.1"
+start "Frontend Server" /D "%ROOT%frontend" cmd /k "..\.venv311\Scripts\python.exe serve.py"
 
 echo.
 echo ============================================

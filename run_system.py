@@ -11,7 +11,7 @@ import threading
 import json
 
 # Configuration
-REPO_ROOT = r'D:\github\pdp-system'
+REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 VENV_PATH = os.path.join(REPO_ROOT, '.venv311')
 PYTHON_EXE = os.path.join(VENV_PATH, 'Scripts', 'python.exe')
 PYTEST_EXE = os.path.join(VENV_PATH, 'Scripts', 'pytest.exe')
@@ -215,7 +215,7 @@ FRONTEND (Static Files):
   - Root:    {os.path.join(REPO_ROOT, 'frontend')}
 
 CREDENTIALS:
-  - Username: student
+  - Username: UIBE
   - Password: 123
 
 Status:

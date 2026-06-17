@@ -2,9 +2,10 @@
 REM Minimal startup script for pdp-system
 setlocal enabledelayedexpansion
 
-cd /d D:\github\pdp-system
+set ROOT=%~dp0
+cd /d "%ROOT%"
 
-set VENV=D:\github\pdp-system\.venv311
+set VENV=%ROOT%.venv311
 set PY=%VENV%\Scripts\python.exe
 set PYTEST=%VENV%\Scripts\pytest.exe
 set UVICORN=%VENV%\Scripts\uvicorn.exe
@@ -37,9 +38,9 @@ echo Starting backend...
 start "PDP Backend" "%UVICORN%" app.main:app --host 127.0.0.1 --port 8001 --reload
 
 echo Starting frontend...
-start "PDP Frontend" "%PY%" D:\github\pdp-system\frontend\serve.py
+start "PDP Frontend" "%PY%" "%ROOT%frontend\serve.py"
 
-cd /d D:\github\pdp-system
+cd /d "%ROOT%"
 
 echo.
 echo ============================================================================
@@ -49,7 +50,7 @@ echo Backend:  http://127.0.0.1:8001
 echo Docs:     http://127.0.0.1:8001/docs
 echo Frontend: http://127.0.0.1:5500
 echo.
-echo Credentials: student / 123
+echo Credentials: UIBE / 123  (student or staff)
 echo.
 echo Check the opened windows for server logs.
 echo.
