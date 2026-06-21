@@ -54,11 +54,10 @@ app.include_router(files_router)
 app.include_router(teachers_router)
 app.include_router(compare_router, prefix="/api/v1/compare")
 
-# Allow local frontend development origins
+# Frontend is served from the same origin; CORS is kept permissive for API tools.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"],
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -74,4 +73,4 @@ if FRONTEND_DIR.is_dir():
 
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8001)

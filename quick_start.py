@@ -8,9 +8,10 @@ import sys
 import os
 import time
 
-os.chdir(r'D:\github\pdp-system')
+REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+os.chdir(REPO_ROOT)
 
-VENV = r'D:\github\pdp-system\.venv311'
+VENV = os.path.join(REPO_ROOT, '.venv311')
 PY = os.path.join(VENV, 'Scripts', 'python.exe')
 PYTEST = os.path.join(VENV, 'Scripts', 'pytest.exe')
 UVICORN = os.path.join(VENV, 'Scripts', 'uvicorn.exe')
@@ -45,7 +46,7 @@ print("\n[4] Starting frontend (127.0.0.1:5500)...")
 frontend = subprocess.Popen(
     f'"{PY}" -m http.server 5500 --bind 127.0.0.1',
     shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-    cwd=r'D:\github\pdp-system\frontend'
+    cwd=os.path.join(REPO_ROOT, 'frontend')
 )
 print(f"    Frontend PID: {frontend.pid}")
 
@@ -82,7 +83,7 @@ Backend:  http://127.0.0.1:8001
 Docs:     http://127.0.0.1:8001/docs
 Frontend: http://127.0.0.1:5500
 
-Credentials: student / 123
+Credentials: UIBE / 123
 
 Backend PID:  {backend.pid}
 Frontend PID: {frontend.pid}

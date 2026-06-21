@@ -13,9 +13,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/vue@3.2.47/dist/vue.global.prod.js"></script>
     <script>
-        window.__API_BASE__ = window.location.port === "5500"
-            ? "http://127.0.0.1:8001"
-            : window.location.origin;
+        // The frontend is served by FastAPI on the same origin.
+        window.__API_BASE__ = window.location.origin;
     </script>
     <script type="module" src="/app.js"></script>
 </body>
