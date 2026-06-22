@@ -23,6 +23,7 @@ def list_students(page: int = 1, limit: int = 20, q: str = None, db: Session = D
             "school": s.school,
             "major": s.major,
             "name": s.user.display_name if s.user else None,
+            "username": s.user.username if s.user else None,
         })
     return result
 

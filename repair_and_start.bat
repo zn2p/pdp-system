@@ -76,21 +76,13 @@ if errorlevel 1 (
 )
 
 echo.
-echo [5] Refreshing demo account 123 / 123...
-"%PY%" -m app.db.seed_demo_123
-if errorlevel 1 (
-    echo Demo account seed failed. The system may still run, but account 123 may be unavailable.
-)
-
-echo.
-echo [6] Starting server...
+echo [5] Starting server...
 echo App:  http://127.0.0.1:8001
 echo Docs: http://127.0.0.1:8001/docs
 
 echo.
 echo Accounts:
 echo   UIBE / 123     Student or Teacher
-echo   123  / 123     Demo student 2
 echo.
 echo Keep this server window open while using the system.
 echo.

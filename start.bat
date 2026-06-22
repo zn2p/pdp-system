@@ -89,7 +89,6 @@ echo    Docs: http://127.0.0.1:8001/docs
 echo.
 echo Credentials:
 echo   Student/Teacher: UIBE / 123
-echo   Demo student 2:  123 / 123
 echo.
 echo Keep this server window open while using the system.
 echo.

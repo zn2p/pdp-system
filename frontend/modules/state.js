@@ -155,7 +155,11 @@ export function useAppState() {
                 try {
                     const students = await apiFetch("/api/v1/students");
                     const target = Array.isArray(students) && students.length
-                        ? students.find(s => s.student_id === loginForm.username) || students[0]
+                        ? (
+                            students.find(s => s.username === loginForm.username)
+                            || students.find(s => s.student_id === loginForm.username)
+                            || null
+                          )
                         : null;
                     if (target) {
                         currentStudentId.value = target.id;

@@ -9,6 +9,15 @@ from app.schemas.schemas import CourseCreate, CourseOut
 router = APIRouter(prefix="/api/v1/students/{student_id}/courses", tags=["courses"])
 
 
+def validate_course_payload(payload: CourseCreate):
+    if payload.credit is not None and payload.credit <= 0:
+        raise HTTPException(status_code=400, detail="学分必须大于 0")
+    if payload.grade is not None and payload.grade <= 0:
+        raise HTTPException(status_code=400, detail="成绩必须大于0")
+    if payload.grade is not None and payload.grade > 100:
+        raise HTTPException(status_code=400, detail="成绩不能超过100")
+
+
 @router.get("", response_model=List[CourseOut])
 def list_courses(student_id: int, db: Session = Depends(get_db)):
     student = db.query(Student).filter(Student.id == student_id).first()
@@ -19,6 +28,7 @@ def list_courses(student_id: int, db: Session = Depends(get_db)):
 
 @router.post("", response_model=CourseOut)
 def create_course(student_id: int, payload: CourseCreate, db: Session = Depends(get_db)):
+    validate_course_payload(payload)
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="student not found")
@@ -31,6 +41,7 @@ def create_course(student_id: int, payload: CourseCreate, db: Session = Depends(
 
 @router.put("/{course_id}", response_model=CourseOut)
 def update_course(student_id: int, course_id: int, payload: CourseCreate, db: Session = Depends(get_db)):
+    validate_course_payload(payload)
     course = db.query(Course).filter(Course.id == course_id, Course.student_id == student_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="course not found")
